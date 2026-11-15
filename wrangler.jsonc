@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kinovecher-fs",
+  "account_id": "45a9105f3c04ec6dc7970521af5183ff",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kinovecher-fs-2026",
+      "database_id": "1f7da892-2264-4174-86e8-bef6dcca4b82",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}
