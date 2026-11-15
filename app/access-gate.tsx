@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import WhiteTree from "./white-tree";
+import StarField from "./star-field";
 
 export default function AccessGate() {
   const [code, setCode] = useState("");
@@ -29,22 +30,22 @@ export default function AccessGate() {
 
   return (
     <main className="gate-page">
-      <div className="gate-glow" />
-      <header className="gate-header"><div className="brand"><span className="brand-mark">✳</span><span>кино<span className="brand-accent">вечер</span></span></div><span>ЧАСТНЫЙ КИНОКЛУБ</span></header>
+      <StarField />
+      <header className="gate-header"><div className="brand"><WhiteTree /><span>Киновечер</span></div><span>ДЛЯ СВОЕЙ КОМПАНИИ</span></header>
       <section className="gate-card">
         <div className="gate-icon"><WhiteTree /></div>
         <div className="eyebrow"><span className="eyebrow-dot" /> ДОСТУП ПО КОДУ</div>
-        <h1>Войдите<br /><em>в Братство кино</em></h1>
-        <p>Введите общий код, который вам передали. После входа вы сможете предлагать фильмы, крутить колесо и отмечать просмотренное.</p>
+        <h1>Вечер<br /><em>хорошего кино</em></h1>
+        <p>Введите код вашей компании, чтобы выбрать фильм на вечер, предложить свой и отметить просмотренное.</p>
         <form onSubmit={enter} className="gate-form">
           <label htmlFor="access-code">Код доступа</label>
           <input id="access-code" type="password" value={code} onChange={(event) => setCode(event.target.value)} placeholder="Введите код" autoComplete="off" autoFocus required />
           {error && <div className="gate-error" role="alert">{error}</div>}
-          <button className="submit-button" disabled={busy}>{busy ? "Проверяем..." : "Войти в киноклуб"}<span>↗</span></button>
+          <button className="submit-button" disabled={busy}>{busy ? "Проверяем…" : "Войти"}<span>↗</span></button>
         </form>
         <small>Код один для всех приглашённых участников.</small>
       </section>
-      <footer className="gate-footer">✧ &nbsp; Даже самый долгий путь начинается с хорошего фильма.</footer>
+      <footer className="gate-footer">Хороший фильм. Своя компания.</footer>
     </main>
   );
 }

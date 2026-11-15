@@ -1,0 +1,62 @@
+{
+  "Запах женщины": {
+    "poster": "/posters/scent.jpg",
+    "year": "1992",
+    "source": "https://en.wikipedia.org/wiki/Scent_of_a_Woman_(1992_film)"
+  },
+  "Крестный отец": {
+    "poster": "/posters/godfather.jpg",
+    "year": "1972",
+    "source": "https://en.wikipedia.org/wiki/The_Godfather"
+  },
+  "Воспоминание": {
+    "poster": "/posters/reminiscence.jpg",
+    "year": "2021",
+    "source": "https://en.wikipedia.org/wiki/Reminiscence_(2021_film)"
+  },
+  "Все везде и сразу": {
+    "poster": "/posters/everything.jpg",
+    "year": "2022",
+    "source": "https://en.wikipedia.org/wiki/Everything_Everywhere_All_at_Once"
+  },
+  "Паразиты": {
+    "poster": "/posters/parasite.jpg",
+    "year": "2019",
+    "source": "https://en.wikipedia.org/wiki/Parasite_(2019_film)"
+  },
+  "Человек который изменил все": {
+    "poster": "/posters/moneyball.jpg",
+    "year": "2011",
+    "source": "https://en.wikipedia.org/wiki/Moneyball_(film)"
+  },
+  "Собачья жизнь": {
+    "poster": "/posters/dogs-purpose.jpg",
+    "year": "2017",
+    "source": "https://en.wikipedia.org/wiki/A_Dog's_Purpose_(film)"
+  },
+  "Куда приводят мечты": {
+    "poster": "/posters/dreams.jpg",
+    "year": "1998",
+    "source": "https://en.wikipedia.org/wiki/What_Dreams_May_Come_(film)"
+  },
+  "Бригада": {
+    "poster": "/posters/brigada.jpg",
+    "year": "2002",
+    "source": "https://en.wikipedia.org/wiki/Brigada"
+  },
+  "Советник 2013": {
+    "poster": "/posters/counselor.jpg",
+    "year": "2013",
+    "source": "https://en.wikipedia.org/wiki/The_Counselor"
+  },
+  "Лулу и Бриггс": {
+    "poster": "/posters/dog.jpg",
+    "year": "2022",
+    "source": "https://en.wikipedia.org/wiki/Dog_(2022_film)"
+  },
+  "Того": {
+    "poster": "/posters/togo.jpg",
+    "year": "2019",
+    "source": "https://en.wikipedia.org/wiki/Togo_(film)"
+  }
+}

@@ -3,7 +3,7 @@ import "./globals.css";
 import "./middle-earth.css";
 
 export const metadata: Metadata = {
-  title: "Братство кино — Киновечер",
+  title: "Киновечер — что посмотрим сегодня?",
   description: "Общий список фильмов, колесо выбора и идеи для следующего киновечера.",
 };
 

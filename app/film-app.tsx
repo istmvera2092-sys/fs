@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import WhiteTree from "./white-tree";
+import StarField from "./star-field";
+import SelectedFilm from "./selected-film";
 
 type Film = {
   id: number;
@@ -33,8 +35,8 @@ function Wheel({ films, rotation, spinning }: { films: Film[]; rotation: number;
             const x = 50 + 32 * Math.cos(angle);
             const y = 50 + 32 * Math.sin(angle);
             return (
-              <span className="wheel-label" key={film.id} style={{ left: x + "%", top: y + "%", fontSize: count > 10 ? "10px" : count > 6 ? "11px" : "13px" }}>
-                {count > 12 ? index + 1 : film.title}
+              <span className="wheel-label" key={film.id} style={{ left: x + "%", top: y + "%", transform: "translate(-50%, -50%) rotate(" + (angle * 180 / Math.PI + (Math.cos(angle) < 0 ? 180 : 0)) + "deg)", fontSize: count > 10 ? "9px" : count > 6 ? "11px" : "13px" }}>
+                {film.title.length > 24 ? film.title.slice(0, 22) + "…" : film.title}
               </span>
             );
           })}
@@ -49,6 +51,7 @@ export default function Home() {
   const [films, setFilms] = useState<Film[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
   const [formType, setFormType] = useState<"idea" | "queue">("idea");
@@ -66,7 +69,12 @@ export default function Home() {
       const response = await fetch("/api/films", { cache: "no-store" });
       const data = await response.json() as { films: Film[]; error?: string };
       if (!response.ok) throw new Error(data.error || "Не удалось загрузить список.");
-      if (!spinningRef.current) setFilms(data.films);
+      if (!spinningRef.current) {
+        setFilms(data.films);
+        let savedId = "";
+        try { savedId = sessionStorage.getItem("kinovecher-pick") ?? ""; } catch {}
+        setPicked((previous) => data.films.find((film) => film.id === (previous?.id ?? Number(savedId))) ?? null);
+      }
       setError("");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Не удалось загрузить список.");
@@ -101,12 +109,16 @@ export default function Home() {
     rotationRef.current = next;
     spinningRef.current = true;
     setPicked(null);
+    try { sessionStorage.removeItem("kinovecher-pick"); } catch {}
+    setNotice("");
     setSpinning(true);
     requestAnimationFrame(() => setRotation(next));
     spinTimer.current = setTimeout(() => {
       spinningRef.current = false;
       setSpinning(false);
       setPicked(film);
+      try { sessionStorage.setItem("kinovecher-pick", String(film.id)); } catch {}
+      requestAnimationFrame(() => document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth", block: "center" }));
       refresh();
     }, 4700);
   }
@@ -127,7 +139,7 @@ export default function Home() {
       setTitle("");
       setNote("");
       await refresh();
-      document.getElementById(formType === "idea" ? "ideas" : "watchlist")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setNotice(formType === "idea" ? "Предложение добавлено. Его увидят все участники." : "Фильм добавлен в колесо.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Не удалось добавить фильм.");
     } finally {
@@ -146,7 +158,7 @@ export default function Home() {
       });
       const data = await response.json() as { error?: string };
       if (!response.ok) throw new Error(data.error || "Не удалось обновить фильм.");
-      if (picked?.id === id && status === "watched") setPicked(null);
+      setPicked((previous) => previous?.id === id ? { ...previous, status } : previous);
       await refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Не удалось обновить фильм.");
@@ -182,42 +194,75 @@ export default function Home() {
   }
 
   return (
-    <main>
-      <div className="ambient ambient-one" /><div className="ambient ambient-two" />
+    <main className="cinema-page">
+      <StarField />
       <header className="site-header">
-        <a className="brand" href="#" aria-label="Киновечер, на главную"><span className="brand-mark">✳</span><span>кино<span className="brand-accent">вечер</span></span></a>
-        <nav aria-label="Разделы"><a href="#watchlist">Список</a><a href="#ideas">Предложения</a><a href="#watched">Просмотрено</a></nav>
-        <a className="header-action" href="#add">+ Добавить фильм</a>
+        <a className="brand" href="#" aria-label="Киновечер"><WhiteTree /><span>Киновечер</span></a>
+        <nav aria-label="Разделы"><a href="#ideas">Предложения</a><a href="#watched">Просмотрено</a></nav>
+        <a className="header-action" href="#add">+ Предложить фильм</a>
       </header>
 
-      <section className="hero page-width">
-        <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> БРАТСТВО КИНО · СОВЕТ СОБРАН</div>
-          <h1>Один вечер.<br /><em>Тысяча историй.</em></h1>
-          <p className="hero-lede">Соберите свою компанию у огня. Предложите историю, достойную путешествия, и позвольте кольцу выбрать фильм на сегодня.</p>
-          <div className="hero-actions"><button className="primary-button" onClick={spin} disabled={!queue.length || spinning}>✦ &nbsp; Крутить колесо <span>↗</span></button><a className="text-link" href="#add">Предложить фильм <span>→</span></a></div>
-          <div className="hero-stats"><div><strong>{queue.length}</strong><span>в списке</span></div><i /><div><strong>{ideas.length}</strong><span>идей</span></div><i /><div><strong>{watched.length}</strong><span>просмотрено</span></div></div>
+      <section className="cinema-hero page-width">
+        <div className="cinema-intro">
+          <span className="small-caps">ДЛЯ СВОЕЙ КОМПАНИИ</span>
+          <h1>Что посмотрим <em>сегодня?</em></h1>
+          <p>Собирайтесь вместе. Выбор фильма доверьте колесу.</p>
         </div>
-        <div className="wheel-panel">
-          <div className="wheel-panel-top"><span>КОЛЬЦО ВЫБОРА</span><span className="live-pill"><b /> {queue.length ? queue.length + " в игре" : "Ждём фильмы"}</span></div>
+        <div className="cinema-wheel" id="wheel">
+          <div className="wheel-caption"><span /><WhiteTree /><span /></div>
           <Wheel films={queue} rotation={rotation} spinning={spinning} />
-          <div className="wheel-result" aria-live="polite">
-            {spinning ? <><span className="result-kicker">Барабанная дробь...</span><strong>Выбираем фильм</strong></> : picked ? <><span className="result-kicker">СЕГОДНЯ СМОТРИМ</span><strong>{picked.title}</strong><button onClick={() => changeStatus(picked.id, "watched")} disabled={busyId === picked.id}>✓ Отметить просмотренным</button></> : <><span className="result-kicker">ВАШ КИНОВЕЧЕР НАЧИНАЕТСЯ ЗДЕСЬ</span><strong>{queue.length ? "Крутите и смотрите!" : "Добавьте первый фильм"}</strong></>}
-          </div>
+          <button className="primary-button spin-button" onClick={spin} disabled={loading || !queue.length || spinning}>
+            <span aria-hidden="true">✧</span>{loading ? "Загружаем фильмы…" : spinning ? "Выбираем…" : "Выбрать фильм"}<span aria-hidden="true">✧</span>
+          </button>
+          <p className="wheel-hint" aria-live="polite">{loading ? "Подключаем общий список" : spinning ? "Ещё мгновение — и выбор сделан" : queue.length ? "В колесе: " + queue.length + " · Просмотренные не повторяются" : "Все фильмы просмотрены. Добавьте новые ниже."}</p>
         </div>
       </section>
 
-      <section className="content page-width" id="watchlist">
-        <div className="section-heading"><div><span className="section-index">01 / КОЛЛЕКЦИЯ</span><h2>В списке на просмотр</h2><p>Эти фильмы участвуют в розыгрыше.</p></div><span className="count-badge">{queue.length} фильмов</span></div>
-        {loading ? <div className="empty-state">Загружаем список...</div> : queue.length ? <div className="film-grid">{queue.map((film, index) => <article className="film-card" key={film.id}><div className="film-card-top"><span className="film-number">{String(index + 1).padStart(2, "0")}</span><button className="icon-button" title="Удалить фильм" aria-label={"Удалить " + film.title} onClick={() => removeFilm(film)} disabled={busyId === film.id}>×</button></div><div><span className="film-tag">В СПИСКЕ</span><h3>{film.title}</h3>{film.note && <p>{film.note}</p>}</div><button className="card-action" onClick={() => changeStatus(film.id, "watched")} disabled={busyId === film.id}><span className="check-square" /> Посмотрели</button></article>)}</div> : <div className="empty-state"><span>✦</span><h3>Пока здесь пусто</h3><p>Добавьте фильм сразу в список или перенесите его из предложений.</p><a href="#add">Добавить фильм →</a></div>}
+      <section className="tonight page-width" id="tonight" aria-live="polite" aria-label="Результат выбора">
+        {picked && <SelectedFilm key={picked.id} film={picked} busy={busyId === picked.id || spinning} onWatched={(checked) => changeStatus(picked.id, checked ? "watched" : "queue")} />}
       </section>
 
-      <section className="ideas-band" id="ideas"><div className="page-width"><div className="section-heading"><div><span className="section-index">02 / ВДОХНОВЕНИЕ</span><h2>Предложения</h2><p>Идеи от вашей компании. Каждый увидит их здесь.</p></div><span className="count-badge">{ideas.length} идей</span></div>{ideas.length ? <div className="ideas-list">{ideas.map((film) => <article className="idea-row" key={film.id}><span className="idea-spark">✳</span><div className="idea-text"><h3>{film.title}</h3>{film.note && <p>{film.note}</p>}</div><button className="idea-add" onClick={() => changeStatus(film.id, "queue")} disabled={busyId === film.id}>+ В список</button><button className="icon-button" title="Удалить предложение" aria-label={"Удалить " + film.title} onClick={() => removeFilm(film)} disabled={busyId === film.id}>×</button></article>)}</div> : <div className="ideas-empty">Есть фильм на примете? Предложите его первым ↓</div>}</div></section>
-
-      <section className="lower page-width"><div className="add-panel" id="add"><span className="section-index">03 / ВАША ОЧЕРЕДЬ</span><h2>Есть идея<br /><em>для вечера?</em></h2><p>Поделитесь фильмом — он сразу появится у всех приглашённых участников.</p><form onSubmit={addFilm}><label htmlFor="film-title">Название фильма</label><input id="film-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="Например, Отель «Гранд Будапешт»" required /><label htmlFor="film-note">Почему стоит посмотреть <span>(необязательно)</span></label><textarea id="film-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={280} placeholder="Пара слов о фильме..." rows={3} /><div className="form-choice" role="group" aria-label="Куда добавить фильм"><button type="button" className={formType === "idea" ? "choice-active" : ""} onClick={() => setFormType("idea")}>В предложения</button><button type="button" className={formType === "queue" ? "choice-active" : ""} onClick={() => setFormType("queue")}>Сразу в список</button></div><button className="submit-button" disabled={formBusy}>{formBusy ? "Добавляем..." : "Добавить фильм"} <span>↗</span></button></form></div><div className="watched-panel" id="watched"><span className="section-index">04 / ИСТОРИЯ</span><h2>Уже посмотрели</h2><p>Наш небольшой киноархив.</p>{watched.length ? <div className="watched-list">{watched.map((film) => <div className="watched-row" key={film.id}><span className="watched-check">✓</span><div><strong>{film.title}</strong><small>{film.watchedAt ? new Date(film.watchedAt).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : "Просмотрено"}</small></div><button title="Вернуть в список" onClick={() => changeStatus(film.id, "queue")} disabled={busyId === film.id}>↶</button></div>)}</div> : <div className="watched-empty"><span>◌</span><p>Здесь появятся фильмы, которые вы посмотрели вместе.</p></div>}</div></section>
-
+      <section className="community page-width">
+        <div className="community-top"><span /> <span aria-hidden="true">✦</span> <span /></div>
+        <div className="community-grid">
+          <section className="add-panel" id="add">
+            <span className="small-caps">ДОБАВИМ В СЛЕДУЮЩИЙ ВЕЧЕР</span>
+            <h2>Есть хороший фильм?</h2>
+            <p>Предложите его компании или сразу добавьте в колесо.</p>
+            <form onSubmit={addFilm}>
+              <label htmlFor="film-title">Название фильма</label>
+              <input id="film-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="Как называется фильм?" required />
+              <label htmlFor="film-note">Комментарий <span>· необязательно</span></label>
+              <textarea id="film-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={280} placeholder="Год, актёры или почему стоит посмотреть" rows={2} />
+              <div className="form-choice" role="group" aria-label="Куда добавить фильм">
+                <button type="button" aria-pressed={formType === "idea"} className={formType === "idea" ? "choice-active" : ""} onClick={() => setFormType("idea")}>В предложения</button>
+                <button type="button" aria-pressed={formType === "queue"} className={formType === "queue" ? "choice-active" : ""} onClick={() => setFormType("queue")}>Сразу в колесо</button>
+              </div>
+              <button className="submit-button" disabled={formBusy}>{formBusy ? "Добавляем…" : "Добавить фильм"}<span>+</span></button>
+              {notice && <p className="form-notice" role="status">{notice}</p>}
+            </form>
+          </section>
+          <section className="suggestions-panel" id="ideas">
+            <span className="small-caps">ИДЕИ ВАШЕЙ КОМПАНИИ</span>
+            <h2>Предложения <span className="small-count">{ideas.length}</span></h2>
+            <p>Добавьте понравившийся вариант в колесо.</p>
+            {ideas.length ? <div className="ideas-list">{ideas.map((film) => <article className="idea-row" key={film.id}>
+              <div className="idea-text"><h3>{film.title}</h3>{film.note && <p>{film.note}</p>}</div>
+              <button className="idea-add" onClick={() => changeStatus(film.id, "queue")} disabled={busyId === film.id}>В колесо +</button>
+              <button className="icon-button" title="Удалить предложение" aria-label={"Удалить " + film.title} onClick={() => removeFilm(film)} disabled={busyId === film.id}>×</button>
+            </article>)}</div> : <div className="ideas-empty"><span>✧</span><p>Пока нет предложений.<br />Поделитесь первым фильмом.</p></div>}
+          </section>
+        </div>
+        <details className="watched-details" id="watched">
+          <summary>Уже посмотрели <span>{watched.length}</span><span className="details-arrow">⌄</span></summary>
+          {watched.length ? <div className="watched-list">{watched.map((film) => <div className="watched-row" key={film.id}>
+            <span className="watched-check">✓</span><div><strong>{film.title}</strong><small>{film.watchedAt ? new Date(film.watchedAt).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : "Просмотрено"}</small></div>
+            <button title="Вернуть в колесо" aria-label={"Вернуть в колесо: " + film.title} onClick={() => changeStatus(film.id, "queue")} disabled={busyId === film.id}>↶</button>
+          </div>)}</div> : <p className="history-empty">Здесь сохранятся фильмы, которые вы отметите просмотренными.</p>}
+        </details>
+      </section>
       {error && <div className="toast" role="alert">{error}<button aria-label="Закрыть сообщение" onClick={() => setError("")}>×</button></div>}
-      <footer className="site-footer page-width"><span>✳ &nbsp; киновечер</span><span>Хорошее кино начинается с хорошей компании.</span><div><button className="logout-link" onClick={leave}>Выйти</button><a href="#">Наверх ↑</a></div></footer>
+      <footer className="site-footer page-width"><span>Киновечер</span><span>Хороший фильм. Своя компания.</span><div><button className="logout-link" onClick={leave}>Выйти</button><a href="#">Наверх ↑</a></div></footer>
     </main>
   );
 }
