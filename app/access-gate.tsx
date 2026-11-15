@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import WhiteTree from "./white-tree";
 
 export default function AccessGate() {
   const [code, setCode] = useState("");
@@ -31,9 +32,9 @@ export default function AccessGate() {
       <div className="gate-glow" />
       <header className="gate-header"><div className="brand"><span className="brand-mark">✳</span><span>кино<span className="brand-accent">вечер</span></span></div><span>ЧАСТНЫЙ КИНОКЛУБ</span></header>
       <section className="gate-card">
-        <div className="gate-icon"><span>✦</span></div>
+        <div className="gate-icon"><WhiteTree /></div>
         <div className="eyebrow"><span className="eyebrow-dot" /> ДОСТУП ПО КОДУ</div>
-        <h1>Вечер кино<br /><em>начинается здесь.</em></h1>
+        <h1>Войдите<br /><em>в Братство кино</em></h1>
         <p>Введите общий код, который вам передали. После входа вы сможете предлагать фильмы, крутить колесо и отмечать просмотренное.</p>
         <form onSubmit={enter} className="gate-form">
           <label htmlFor="access-code">Код доступа</label>
@@ -43,7 +44,7 @@ export default function AccessGate() {
         </form>
         <small>Код один для всех приглашённых участников.</small>
       </section>
-      <footer className="gate-footer">✳ &nbsp; Хорошее кино начинается с хорошей компании.</footer>
+      <footer className="gate-footer">✧ &nbsp; Даже самый долгий путь начинается с хорошего фильма.</footer>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import WhiteTree from "./white-tree";
 
 type Film = {
   id: number;
@@ -11,7 +12,7 @@ type Film = {
   watchedAt: string | null;
 };
 
-const colors = ["#D97855", "#E8B45E", "#8E9E8B", "#C58B70", "#8B8FAD", "#C5A467", "#A97472", "#94A8A0"];
+const colors = ["#263d30", "#5d5030", "#31473d", "#625a3d", "#243c3c", "#6c5733", "#3b4932", "#4b4930"];
 
 function Wheel({ films, rotation, spinning }: { films: Film[]; rotation: number; spinning: boolean }) {
   const count = films.length;
@@ -37,7 +38,7 @@ function Wheel({ films, rotation, spinning }: { films: Film[]; rotation: number;
               </span>
             );
           })}
-          <div className="wheel-hub"><span>✦</span></div>
+          <div className="wheel-hub"><WhiteTree /></div>
         </div>
       </div>
     </div>
@@ -191,14 +192,14 @@ export default function Home() {
 
       <section className="hero page-width">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> ВАШ ОБЩИЙ КИНОКЛУБ</div>
-          <h1>Что смотрим<br /><em>сегодня?</em></h1>
-          <p className="hero-lede">Больше никаких бесконечных поисков. Добавляйте фильмы, собирайте идеи и доверьте выбор случаю.</p>
+          <div className="eyebrow"><span className="eyebrow-dot" /> БРАТСТВО КИНО · СОВЕТ СОБРАН</div>
+          <h1>Один вечер.<br /><em>Тысяча историй.</em></h1>
+          <p className="hero-lede">Соберите свою компанию у огня. Предложите историю, достойную путешествия, и позвольте кольцу выбрать фильм на сегодня.</p>
           <div className="hero-actions"><button className="primary-button" onClick={spin} disabled={!queue.length || spinning}>✦ &nbsp; Крутить колесо <span>↗</span></button><a className="text-link" href="#add">Предложить фильм <span>→</span></a></div>
           <div className="hero-stats"><div><strong>{queue.length}</strong><span>в списке</span></div><i /><div><strong>{ideas.length}</strong><span>идей</span></div><i /><div><strong>{watched.length}</strong><span>просмотрено</span></div></div>
         </div>
         <div className="wheel-panel">
-          <div className="wheel-panel-top"><span>СЛУЧАЙНЫЙ ВЫБОР</span><span className="live-pill"><b /> {queue.length ? queue.length + " в игре" : "Ждём фильмы"}</span></div>
+          <div className="wheel-panel-top"><span>КОЛЬЦО ВЫБОРА</span><span className="live-pill"><b /> {queue.length ? queue.length + " в игре" : "Ждём фильмы"}</span></div>
           <Wheel films={queue} rotation={rotation} spinning={spinning} />
           <div className="wheel-result" aria-live="polite">
             {spinning ? <><span className="result-kicker">Барабанная дробь...</span><strong>Выбираем фильм</strong></> : picked ? <><span className="result-kicker">СЕГОДНЯ СМОТРИМ</span><strong>{picked.title}</strong><button onClick={() => changeStatus(picked.id, "watched")} disabled={busyId === picked.id}>✓ Отметить просмотренным</button></> : <><span className="result-kicker">ВАШ КИНОВЕЧЕР НАЧИНАЕТСЯ ЗДЕСЬ</span><strong>{queue.length ? "Крутите и смотрите!" : "Добавьте первый фильм"}</strong></>}

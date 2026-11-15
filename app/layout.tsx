@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./middle-earth.css";
 
 export const metadata: Metadata = {
-  title: "Киновечер — решим, что смотреть",
+  title: "Братство кино — Киновечер",
   description: "Общий список фильмов, колесо выбора и идеи для следующего киновечера.",
 };
 
