@@ -51,11 +51,6 @@ export default function Home() {
   const [films, setFilms] = useState<Film[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [title, setTitle] = useState("");
-  const [note, setNote] = useState("");
-  const [formType, setFormType] = useState<"idea" | "queue">("idea");
-  const [formBusy, setFormBusy] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
@@ -96,7 +91,6 @@ export default function Home() {
   }, [refresh]);
 
   const queue = films.filter((film) => film.status === "queue").reverse();
-  const ideas = films.filter((film) => film.status === "idea");
   const watched = films.filter((film) => film.status === "watched");
 
   function spin() {
@@ -110,7 +104,6 @@ export default function Home() {
     spinningRef.current = true;
     setPicked(null);
     try { sessionStorage.removeItem("kinovecher-pick"); } catch {}
-    setNotice("");
     setSpinning(true);
     requestAnimationFrame(() => setRotation(next));
     spinTimer.current = setTimeout(() => {
@@ -121,30 +114,6 @@ export default function Home() {
       requestAnimationFrame(() => document.getElementById("tonight")?.scrollIntoView({ behavior: "smooth", block: "center" }));
       refresh();
     }, 4700);
-  }
-
-  async function addFilm(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!title.trim()) return;
-    setFormBusy(true);
-    setError("");
-    try {
-      const response = await fetch("/api/films", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, note, status: formType }),
-      });
-      const data = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(data.error || "Не удалось добавить фильм.");
-      setTitle("");
-      setNote("");
-      await refresh();
-      setNotice(formType === "idea" ? "Предложение добавлено. Его увидят все участники." : "Фильм добавлен в колесо.");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Не удалось добавить фильм.");
-    } finally {
-      setFormBusy(false);
-    }
   }
 
   async function changeStatus(id: number, status: Film["status"]) {
@@ -167,27 +136,6 @@ export default function Home() {
     }
   }
 
-  async function removeFilm(film: Film) {
-    if (!window.confirm("Удалить «" + film.title + "» из общего списка?")) return;
-    setBusyId(film.id);
-    setError("");
-    try {
-      const response = await fetch("/api/films", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: film.id }),
-      });
-      const data = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(data.error || "Не удалось удалить фильм.");
-      if (picked?.id === film.id) setPicked(null);
-      await refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Не удалось удалить фильм.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
   async function leave() {
     await fetch("/api/access", { method: "DELETE" });
     window.location.reload();
@@ -198,8 +146,7 @@ export default function Home() {
       <StarField />
       <header className="site-header">
         <a className="brand" href="#" aria-label="Киновечер"><WhiteTree /><span>Киновечер</span></a>
-        <nav aria-label="Разделы"><a href="#ideas">Предложения</a><a href="#watched">Просмотрено</a></nav>
-        <a className="header-action" href="#add">+ Предложить фильм</a>
+        <nav aria-label="Разделы"><a href="#watched">Просмотрено</a></nav>
       </header>
 
       <section className="cinema-hero page-width">
@@ -214,7 +161,7 @@ export default function Home() {
           <button className="primary-button spin-button" onClick={spin} disabled={loading || !queue.length || spinning}>
             <span aria-hidden="true">✧</span>{loading ? "Загружаем фильмы…" : spinning ? "Выбираем…" : "Выбрать фильм"}<span aria-hidden="true">✧</span>
           </button>
-          <p className="wheel-hint" aria-live="polite">{loading ? "Подключаем общий список" : spinning ? "Ещё мгновение — и выбор сделан" : queue.length ? "В колесе: " + queue.length + " · Просмотренные не повторяются" : "Все фильмы просмотрены. Добавьте новые ниже."}</p>
+          <p className="wheel-hint" aria-live="polite">{loading ? "Подключаем общий список" : spinning ? "Ещё мгновение — и выбор сделан" : queue.length ? "В колесе: " + queue.length + " · Просмотренные не повторяются" : "Пока нет фильмов для выбора."}</p>
         </div>
       </section>
 
@@ -223,36 +170,6 @@ export default function Home() {
       </section>
 
       <section className="community page-width">
-        <div className="community-top"><span /> <span aria-hidden="true">✦</span> <span /></div>
-        <div className="community-grid">
-          <section className="add-panel" id="add">
-            <span className="small-caps">ДОБАВИМ В СЛЕДУЮЩИЙ ВЕЧЕР</span>
-            <h2>Есть хороший фильм?</h2>
-            <p>Предложите его компании или сразу добавьте в колесо.</p>
-            <form onSubmit={addFilm}>
-              <label htmlFor="film-title">Название фильма</label>
-              <input id="film-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder="Как называется фильм?" required />
-              <label htmlFor="film-note">Комментарий <span>· необязательно</span></label>
-              <textarea id="film-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={280} placeholder="Год, актёры или почему стоит посмотреть" rows={2} />
-              <div className="form-choice" role="group" aria-label="Куда добавить фильм">
-                <button type="button" aria-pressed={formType === "idea"} className={formType === "idea" ? "choice-active" : ""} onClick={() => setFormType("idea")}>В предложения</button>
-                <button type="button" aria-pressed={formType === "queue"} className={formType === "queue" ? "choice-active" : ""} onClick={() => setFormType("queue")}>Сразу в колесо</button>
-              </div>
-              <button className="submit-button" disabled={formBusy}>{formBusy ? "Добавляем…" : "Добавить фильм"}<span>+</span></button>
-              {notice && <p className="form-notice" role="status">{notice}</p>}
-            </form>
-          </section>
-          <section className="suggestions-panel" id="ideas">
-            <span className="small-caps">ИДЕИ ВАШЕЙ КОМПАНИИ</span>
-            <h2>Предложения <span className="small-count">{ideas.length}</span></h2>
-            <p>Добавьте понравившийся вариант в колесо.</p>
-            {ideas.length ? <div className="ideas-list">{ideas.map((film) => <article className="idea-row" key={film.id}>
-              <div className="idea-text"><h3>{film.title}</h3>{film.note && <p>{film.note}</p>}</div>
-              <button className="idea-add" onClick={() => changeStatus(film.id, "queue")} disabled={busyId === film.id}>В колесо +</button>
-              <button className="icon-button" title="Удалить предложение" aria-label={"Удалить " + film.title} onClick={() => removeFilm(film)} disabled={busyId === film.id}>×</button>
-            </article>)}</div> : <div className="ideas-empty"><span>✧</span><p>Пока нет предложений.<br />Поделитесь первым фильмом.</p></div>}
-          </section>
-        </div>
         <details className="watched-details" id="watched">
           <summary>Уже посмотрели <span>{watched.length}</span><span className="details-arrow">⌄</span></summary>
           {watched.length ? <div className="watched-list">{watched.map((film) => <div className="watched-row" key={film.id}>

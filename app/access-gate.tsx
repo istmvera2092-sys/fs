@@ -36,7 +36,7 @@ export default function AccessGate() {
         <div className="gate-icon"><WhiteTree /></div>
         <div className="eyebrow"><span className="eyebrow-dot" /> ДОСТУП ПО КОДУ</div>
         <h1>Вечер<br /><em>хорошего кино</em></h1>
-        <p>Введите код вашей компании, чтобы выбрать фильм на вечер, предложить свой и отметить просмотренное.</p>
+        <p>Введите код вашей компании, чтобы выбрать фильм на вечер и отметить просмотренное.</p>
         <form onSubmit={enter} className="gate-form">
           <label htmlFor="access-code">Код доступа</label>
           <input id="access-code" type="password" value={code} onChange={(event) => setCode(event.target.value)} placeholder="Введите код" autoComplete="off" autoFocus required />

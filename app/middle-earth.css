@@ -19,7 +19,6 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .brand > svg { width: 32px; height: 42px; color: #dec88e; }
 .site-header nav a { color: #e8e5d2; font-size: 12px; font-weight: 500; }
 .site-header nav a:hover { color: #fff2c9; }
-.header-action { border-color: #c9b2738a; border-radius: 3px; color: #f2e2b2; background: #071c2399; padding: 12px 16px; font-size: 11px; }
 .small-caps { color: #dac48f; font-size: 10px; line-height: 1.6; font-weight: 600; letter-spacing: .22em; }
 .cinema-hero { padding: 49px 0 12px; text-align: center; position: relative; }
 .cinema-intro h1 { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(44px, 5.3vw, 76px); font-weight: 500; letter-spacing: -.035em; line-height: 1.12; margin: 11px 0 12px; text-shadow: 0 3px 28px #0008; }
@@ -62,38 +61,14 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .watched-toggle.is-watched { color: #b9dba3; }
 .chosen-copy > .chosen-hint { font-size: 10px; color: #99b1a9; margin-top: 4px; max-width: 300px; }
 .poster-credit { display: inline-block; color: #9dada3; font-size: 9px; margin-top: 8px; text-underline-offset: 3px; }
-.community { position: relative; padding: 28px 0 0; }
-.community-top { display: flex; gap: 20px; color: #c9b47b; align-items: center; justify-content: center; margin: 0 0 45px; }
-.community-top > span:first-child, .community-top > span:last-child { height: 1px; flex: 1; background: linear-gradient(90deg, transparent, #c9b47b50); }
-.community-top > span:last-child { transform: rotate(180deg); }
-.community-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 62px; padding: 35px; border: 1px solid #b8a47340; background: #071d26dc; border-radius: 6px; backdrop-filter: blur(10px); }
-.community h2 { font: 500 36px/1.1 "Cormorant Garamond", Georgia, serif; margin: 9px 0 12px; letter-spacing: -.015em; color: #f6e5bd; }
+.community { position: relative; padding: 18px 0 0; }
 .community p { color: #abbeb6; font-size: 12px; line-height: 1.7; margin-top: 0; }
-.small-count { display: inline-block; margin-left: 6px; font: 12px Manrope, sans-serif; color: #ceb984; vertical-align: middle; }
-.community form { margin-top: 25px; }
 form label { color: #e0e4d1; font-size: 11px; }
-form label span { color: #9baea1; font-weight: 400; }
 form input, form textarea { color: #f2e8ce; background: #041921c7; border-color: #bca46755; border-radius: 3px; min-height: 46px; font-size: 14px; padding: 12px; margin-bottom: 18px; }
 form input:focus, form textarea:focus { border-color: #dbc28a; box-shadow: 0 0 0 3px #bca46713; }
 form input::placeholder, form textarea::placeholder { color: #8fa89e; }
-form textarea { min-height: 80px; }
-.form-choice { gap: 10px; }
-.form-choice button { min-height: 42px; font-size: 11px; border-radius: 3px; color: #b2c3b9; border-color: #bca4674a; flex: 1; }
-.form-choice .choice-active { color: #f0deaf; background: #c9ad671e; border-color: #c9ad6799; }
 .submit-button { font-size: 13px; min-height: 48px; padding: 12px 17px; }
-.community .form-notice { color: #c2d8a9; margin: 15px 0 0; }
-.ideas-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 26px; max-height: 460px; overflow-y: auto; }
-.idea-row { background: #0d2932b0; border: 1px solid #cfb77930; padding: 14px; border-radius: 3px; gap: 12px; }
-.idea-text h3 { font: 500 23px/1.1 "Cormorant Garamond", Georgia, serif; color: #f0e4c4; }
-.idea-text p { color: #aabcb0; font-size: 11px; margin: 6px 0 0; }
-.idea-add { min-height: 40px; border-radius: 3px; color: #e8d5a0; border-color: #bca66c70; font-size: 10px; padding: 8px; }
-.idea-add:hover { background: #d4b97b; color: #102625; }
-.icon-button { color: #a9b7a4; min-width: 28px; min-height: 40px; }
-.icon-button:hover { color: #f3deb0; }
-.ideas-empty { padding: 40px 15px; margin-top: 26px; border: 1px dashed #c1ae7840; border-radius: 3px; color: #c9b77d; }
-.ideas-empty > span { font-size: 32px; }
-.ideas-empty p { margin: 10px 0 0; color: #aabeb1; }
-.watched-details { border-block: 1px solid #c4ac6d40; margin: 34px 0 45px; background: #061c25ab; padding: 0 20px; border-radius: 3px; }
+.watched-details { border-block: 1px solid #c4ac6d40; margin: 20px 0 45px; background: #061c25ab; padding: 0 20px; border-radius: 3px; }
 .watched-details summary { display: flex; align-items: center; gap: 13px; cursor: pointer; padding: 21px 0; color: #d1d8c4; font-size: 13px; list-style: none; min-height: 60px; }
 .watched-details summary::-webkit-details-marker { display: none; }
 .watched-details summary > span { color: #c6b47d; font-size: 11px; }
@@ -133,7 +108,6 @@ form textarea { min-height: 80px; }
   .site-header nav { display: none; }
   .brand { font-size: 25px; gap: 8px; }
   .brand > svg { width: 25px; height: 34px; }
-  .header-action { min-height: 40px; padding: 10px 11px; font-size: 10px; }
   .cinema-hero { padding-top: 31px; }
   .cinema-intro h1 { font-size: clamp(41px, 7.5vw, 60px); }
   .cinema-intro h1 em { display: block; }
@@ -146,11 +120,6 @@ form textarea { min-height: 80px; }
   .spin-button { min-height: 50px; min-width: 230px; }
   .wheel-hint { font-size: 10px; margin-top: 12px; }
   .community { padding-top: 24px; }
-  .community-top { margin-bottom: 24px; }
-  .community-grid { grid-template-columns: 1fr; gap: 38px; padding: 25px 22px; }
-  .community h2 { font-size: 33px; }
-  .suggestions-panel { padding-top: 25px; border-top: 1px solid #c4ac7138; }
-  form input, form textarea { font-size: 16px; }
   .chosen-card { grid-template-columns: 125px 1fr; margin-bottom: 10px; }
   .chosen-poster { min-height: 0; }
   .chosen-poster img { height: 100%; object-fit: cover; }
@@ -179,7 +148,6 @@ form textarea { min-height: 80px; }
   .chosen-card { grid-template-columns: 95px 1fr; }
   .chosen-copy { padding: 18px 14px; }
   .chosen-copy h2 { font-size: 27px; }
-  .community-grid { padding: 24px 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .star-field i { animation: none; opacity: .5; }
