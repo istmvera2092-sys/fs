@@ -1,11 +1,11 @@
 # Киновечер
 
-[Открыть сайт без VPN](https://script.google.com/macros/s/AKfycbzdZYf74dsGiZAaTdWuP9COIo2va-_qLX8W4Oc-4VFgT5GkUfVo9R_v7A-z74sJsk0m/exec)
+[Открыть сайт](https://kinovecher-sophie-2026.web.app/)
 
 Сайт для киновечеров с доступом по общему коду. Колесо выбирает фильм из общего списка. После выбора показываются постер, рейтинги и галочка «Посмотрели». Просмотренные фильмы перестают выпадать. Через сворачиваемый блок можно предложить фильм; предложение увидят все приглашённые, а понравившийся вариант можно перенести в колесо.
 
 На сайте сейчас 12 фильмов. Код доступа не хранится в публичном репозитории.
 
-Действующая версия находится в [google-apps-script](google-apps-script/README.md). Сайт и общие отметки работают через Google Apps Script. Подготовлена [страница для Firebase Hosting](firebase-site/README.md), которая использует тот же общий список без верхнего уведомления Google. Адрес GitHub Pages `https://istmvera2092-sys.github.io/fs/` пока перенаправляет на Google-версию, если GitHub Pages открывается у посетителя.
+Действующая страница размещена на [Firebase Hosting](firebase-site/README.md) без верхнего уведомления Google. Список, предложения и отметки продолжают храниться в прежнем [Google Apps Script](google-apps-script/README.md), поэтому данные остались общими. Адрес GitHub Pages `https://istmvera2092-sys.github.io/fs/` перенаправляет на Firebase-версию, если GitHub Pages открывается у посетителя.
 
 Прежняя реализация на Cloudflare Workers и D1 сохранена в папках `app`, `db` и `drizzle` как исходный код. Google-версия не загружает файлы с Cloudflare или GitHub. Источники иллюстрации и постеров описаны в [docs/visual-assets.md](docs/visual-assets.md).

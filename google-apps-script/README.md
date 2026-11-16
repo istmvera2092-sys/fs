@@ -2,7 +2,7 @@
 
 Отдельная версия сайта для адреса `script.google.com`. Она показывает страницу входа, колесо, постер выбранного фильма, общие предложения и историю просмотров. Фильмы, предложения и отметки хранятся в Script Properties проекта Google. Папка `dist` создаётся локально и не попадает в Git: в собранном `Code.gs` находится код доступа.
 
-Рабочий адрес: https://script.google.com/macros/s/AKfycbzdZYf74dsGiZAaTdWuP9COIo2va-_qLX8W4Oc-4VFgT5GkUfVo9R_v7A-z74sJsk0m/exec
+Запасной адрес с уведомлением Google: https://script.google.com/macros/s/AKfycbzdZYf74dsGiZAaTdWuP9COIo2va-_qLX8W4Oc-4VFgT5GkUfVo9R_v7A-z74sJsk0m/exec
 
 ## Сборка
 
