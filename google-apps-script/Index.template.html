@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Киновечер — что посмотрим сегодня?</title>
+  <style>
+    :root { color-scheme: dark; --gold: #d5bd83; --cream: #f6e8c6; --green: #061b23; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; min-height: 100svh; background: var(--green); color: var(--cream); font: 14px/1.5 Arial, sans-serif; }
+    body::before { content: ""; position: fixed; inset: 0; z-index: -2; background: linear-gradient(180deg, #04172024, #0417206d 58%, #041720e9), url('__BACKGROUND_DATA__') center / cover no-repeat; }
+    body::after { content: ""; position: fixed; inset: 0; z-index: -1; background: linear-gradient(90deg, #03151b50, transparent 25%, transparent 75%, #03151b40); pointer-events: none; }
+    [hidden] { display: none !important; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #f4dda1; outline-offset: 4px; }
+    .stars { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    .stars i { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #fff5d2; box-shadow: 0 0 7px 2px #f6e6b970; animation: twinkle var(--d) ease-in-out var(--delay) infinite alternate; }
+    .stars i:nth-child(5n) { box-shadow: 0 0 10px 4px #f6e6b990; }
+    @keyframes twinkle { from { opacity: .12; transform: scale(.7); } to { opacity: .9; transform: scale(1.25); } }
+    .tree { display: block; width: 34px; height: 43px; color: #e6d19d; }
+    .brand { display: flex; align-items: center; gap: 10px; color: #f8ebc8; font: 30px/1 Georgia, serif; text-decoration: none; }
+    .shell { width: min(1120px, calc(100% - 64px)); margin: 0 auto; }
+    .header { height: 84px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #d4bd8240; }
+    .header a:not(.brand) { color: #e8e5d2; text-decoration: none; font-size: 12px; }
+    .header a:hover { color: #fff0ba; }
+    .caps { color: #dec995; font-size: 10px; font-weight: 700; letter-spacing: .22em; }
+    .gold-button { min-height: 52px; border: 1px solid #f1dda7; border-radius: 3px; background: linear-gradient(110deg, #a98b4d, #ebd6a4 55%, #bd9f61); color: #14272a; box-shadow: inset 0 0 0 3px #80683b45, 0 9px 30px #0006; padding: 13px 22px; font-weight: 700; }
+    .gold-button:hover:not(:disabled) { background: #f2dfa9; }
+    .gate { min-height: 100svh; display: flex; flex-direction: column; }
+    .gate-card { width: min(500px, calc(100% - 36px)); margin: auto; padding: 38px 40px; text-align: center; border: 1px solid #d8bd7b95; border-radius: 100px 100px 5px 5px / 55px 55px 5px 5px; background: linear-gradient(140deg, #0e2932ec, #061a23ed); box-shadow: 0 25px 80px #0008, inset 0 0 0 5px #0b263170; backdrop-filter: blur(8px); }
+    .gate-card .tree { width: 64px; height: 80px; margin: 0 auto 24px; }
+    h1, h2, p { margin-top: 0; }
+    .gate-card h1 { font: 500 58px/.95 Georgia, serif; letter-spacing: -.045em; margin: 18px 0; }
+    .gate-card h1 em, .intro h1 em { font-weight: 400; color: #ead29a; }
+    .gate-card p { max-width: 340px; margin: 0 auto; color: #c6d4c9; font-size: 13px; line-height: 1.7; }
+    .gate-form { margin-top: 27px; text-align: left; }
+    .gate-form label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; }
+    .gate-form input { width: 100%; min-height: 50px; padding: 12px 14px; margin-bottom: 13px; border: 1px solid #bca56d80; border-radius: 3px; background: #041821; color: #fff1d2; font-size: 16px; }
+    .gate-form input::placeholder { color: #9eaca4; }
+    .gate-form .gold-button { width: 100%; }
+    .gate-error { min-height: 20px; color: #ffbaa6; font-size: 12px; margin-bottom: 10px; }
+    .gate-card small { display: block; margin-top: 22px; color: #a9bba9; font-size: 10px; }
+    .gate-footer { padding: 22px; color: #c5cfbd; font-size: 11px; text-align: center; }
+    .app { min-height: 100svh; }
+    .hero { text-align: center; padding: 45px 0 0; }
+    .intro h1 { font: 500 clamp(47px, 6vw, 76px)/1.08 Georgia, serif; letter-spacing: -.05em; margin: 12px 0; text-shadow: 0 3px 28px #0008; }
+    .intro p { color: #e0e7df; font-size: 13px; text-shadow: 0 2px 9px #000; }
+    .wheel-wrap { width: min(414px, calc(100% - 20px)); aspect-ratio: 1; margin: 25px auto 22px; position: relative; filter: drop-shadow(0 16px 28px #0009); }
+    .wheel-rim { position: absolute; inset: 2%; padding: 16px; border-radius: 50%; background: linear-gradient(135deg, #846431, #f1d694 23%, #9a7938 48%, #e3c77d 71%, #72542a); box-shadow: 0 0 0 1px #f1daa3, 0 0 0 5px #07191f, 0 0 0 6px #b8a068, 0 0 45px #d5b67240; }
+    .wheel-disc { width: 100%; height: 100%; position: relative; border: 3px solid #8f793f; border-radius: 50%; box-shadow: inset 0 0 42px #0006; background: #254036; }
+    .wheel-disc::after { content: ""; position: absolute; inset: 7px; border: 1px solid #dec68762; border-radius: 50%; pointer-events: none; }
+    .wheel-label { position: absolute; width: 29%; max-height: 28px; overflow: hidden; text-align: center; color: #fff0c9; line-height: 1.22; font-size: 10px; font-weight: 600; overflow-wrap: anywhere; text-shadow: 0 1px 3px #000; }
+    .wheel-hub { position: absolute; z-index: 2; width: 76px; height: 76px; top: 50%; left: 50%; transform: translate(-50%, -50%); display: grid; place-items: center; border: 5px solid #e5d49e; border-radius: 50%; background: #09202b; box-shadow: 0 3px 12px #0008; }
+    .wheel-hub .tree { width: 40px; height: 50px; }
+    .wheel-pointer { position: absolute; z-index: 3; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 31px solid #f3dfaa; filter: drop-shadow(0 3px 4px #0008); }
+    .spin { min-width: 245px; display: inline-flex; justify-content: center; gap: 25px; font-size: 14px; }
+    .hint { margin: 14px 0 0; color: #d2ddcf; font-size: 11px; text-shadow: 0 1px 6px #000; }
+    .result { padding-top: 32px; scroll-margin-top: 25px; }
+    .result:empty { display: none; }
+    .chosen { width: min(700px, 100%); margin: 0 auto; display: grid; grid-template-columns: 190px 1fr; overflow: hidden; border: 1px solid #d1b8798a; border-radius: 6px; background: linear-gradient(130deg, #102c33f3, #071c25f7); box-shadow: 0 18px 70px #0007; animation: reveal .6s ease-out; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    .poster { min-height: 285px; background: #0a2630; }
+    .poster img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .poster-fallback { height: 100%; display: grid; place-content: center; justify-items: center; gap: 13px; color: #e8d7aa; }
+    .poster-fallback .tree { width: 70px; height: 85px; }
+    .poster-fallback span { font-size: 10px; letter-spacing: .18em; }
+    .chosen-copy { padding: 28px; align-self: center; min-width: 0; }
+    .chosen-copy h2 { font: 500 clamp(31px, 4vw, 43px)/1.08 Georgia, serif; letter-spacing: -.035em; margin: 10px 0; overflow-wrap: anywhere; }
+    .chosen-year { color: #b3c4b5; font-size: 11px; }
+    .chosen-note { color: #c9d6c9; font-size: 12px; margin: 12px 0; }
+    .watched-toggle { display: flex; align-items: center; gap: 11px; min-height: 48px; margin-top: 19px; color: #f4e4b7; font-size: 13px; cursor: pointer; }
+    .watched-toggle input { width: 23px; height: 23px; margin: 0; accent-color: #cfbb87; }
+    .chosen-hint { color: #a6bcb1; font-size: 10px; margin: 4px 0 0; }
+    .history { margin-top: 54px; border-block: 1px solid #c6ad7045; border-radius: 3px; background: #061c25b9; padding: 0 20px; }
+    .history summary { min-height: 63px; display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; color: #d9e1d1; font-size: 13px; }
+    .history summary::-webkit-details-marker { display: none; }
+    .history .count { color: #d6c38e; font-size: 11px; }
+    .history .arrow { margin-left: auto; font-size: 20px; }
+    .history[open] .arrow { transform: rotate(180deg); }
+    .history-list { padding-bottom: 20px; }
+    .history-row { min-height: 56px; display: flex; align-items: center; gap: 14px; border-top: 1px solid #c3ae7550; }
+    .history-row .check { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: #2c4938; color: #cee4b6; }
+    .history-row strong { flex: 1; font-size: 13px; }
+    .history-row button { min-width: 44px; min-height: 44px; border: 0; background: none; color: #d3c088; font-size: 22px; }
+    .history-empty { padding: 0 0 18px; color: #afc0b3; font-size: 12px; }
+    .footer { min-height: 85px; margin-top: 50px; padding-bottom: max(20px, env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid #c5af7340; color: #b8c8b9; font-size: 11px; }
+    .footer strong { color: #e4d19c; font: 22px Georgia, serif; }
+    .footer button { min-height: 44px; border: 0; background: none; color: #c6d1bd; }
+    .toast { position: fixed; z-index: 10; bottom: 22px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 13px 17px; border: 1px solid #d1ad70; border-radius: 5px; background: #16343b; color: #fff0c7; box-shadow: 0 8px 30px #0008; font-size: 12px; }
+    @media (max-width: 700px) {
+      .shell { width: calc(100% - 36px); }
+      .header { height: 70px; }
+      .brand { font-size: 25px; }
+      .brand .tree { width: 26px; height: 35px; }
+      .hero { padding-top: 32px; }
+      .intro h1 { font-size: clamp(40px, 8vw, 59px); }
+      .intro h1 em { display: block; }
+      .intro p { max-width: 270px; margin-inline: auto; font-size: 12px; }
+      .wheel-wrap { width: min(360px, calc(100% - 24px)); }
+      .wheel-rim { padding: 13px; }
+      .chosen { grid-template-columns: 125px 1fr; }
+      .poster { min-height: 220px; }
+      .chosen-copy { padding: 18px 16px; }
+      .chosen-copy h2 { font-size: 31px; }
+      .watched-toggle { font-size: 12px; }
+      .gate-card { padding: 32px 24px; }
+      .gate-card h1 { font-size: 47px; }
+    }
+    @media (max-width: 380px) {
+      .shell { width: calc(100% - 28px); }
+      .intro h1 { font-size: 39px; }
+      .chosen { grid-template-columns: 95px 1fr; }
+      .chosen-copy { padding: 16px 13px; }
+      .chosen-copy h2 { font-size: 26px; }
+      .wheel-hub { width: 62px; height: 62px; }
+      .wheel-hub .tree { width: 32px; height: 42px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .stars i, .chosen { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="white-tree" viewBox="0 0 120 150" fill="none"><g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M60 126V48m0 61-16-22-3-25m19 38 19-26 4-20M60 83 42 51 25 43m35 26 17-29 19-11M60 57 51 32l-1-16m10 42 6-29 12-15M42 51l-3-18-13-9m15 40-20-9L9 39m70 35 20-19 9-20M44 87l-18-7-9-15m62 11 18-2 13-12M60 114l-9 16-18 8m27-18 9 12 19 6M60 126v17m-17-6 17-5 17 7"/><path d="m50 16-6 7m22 6 12 2M25 43l-8 2m79-16 6 9M21 55l-8 4m86-4 12 2"/></g><g fill="currentColor"><path d="m60 0 2 6 6 2-6 2-2 6-2-6-6-2Z"/><circle cx="21" cy="14" r="2"/><circle cx="99" cy="14" r="2"/><circle cx="8" cy="27" r="1.5"/><circle cx="112" cy="21" r="1.5"/><circle cx="35" cy="4" r="1.5"/><circle cx="85" cy="3" r="1.5"/></g></symbol></svg>
+  <div class="stars" aria-hidden="true" id="stars"></div>
+
+  <main class="gate" id="gate">
+    <header class="header shell"><div class="brand"><svg class="tree"><use href="#white-tree"></use></svg><span>Киновечер</span></div><span class="caps">ДЛЯ СВОЕЙ КОМПАНИИ</span></header>
+    <section class="gate-card">
+      <svg class="tree"><use href="#white-tree"></use></svg>
+      <span class="caps">ДОСТУП ПО КОДУ</span>
+      <h1>Вечер<br><em>хорошего кино</em></h1>
+      <p>Введите код вашей компании, чтобы выбрать фильм на вечер и отметить просмотренное.</p>
+      <form class="gate-form" id="gate-form">
+        <label for="access-code">Код доступа</label>
+        <input id="access-code" type="password" placeholder="Введите код" autocomplete="off" required>
+        <div class="gate-error" id="gate-error" role="alert"></div>
+        <button class="gold-button" id="enter-button" type="submit">Войти ↗</button>
+      </form>
+      <small>Код один для всех приглашённых участников.</small>
+    </section>
+    <footer class="gate-footer">Хороший фильм. Своя компания.</footer>
+  </main>
+
+  <main class="app" id="app" hidden>
+    <header class="header shell"><a class="brand" href="#top"><svg class="tree"><use href="#white-tree"></use></svg><span>Киновечер</span></a><a href="#watched">Просмотрено</a></header>
+    <section class="hero shell" id="top">
+      <div class="intro"><span class="caps">ДЛЯ СВОЕЙ КОМПАНИИ</span><h1>Что посмотрим <em>сегодня?</em></h1><p>Собирайтесь вместе. Выбор фильма доверьте колесу.</p></div>
+      <div class="wheel-wrap"><div class="wheel-pointer"></div><div class="wheel-rim"><div class="wheel-disc" id="wheel-disc"></div></div></div>
+      <button class="gold-button spin" id="spin-button" type="button">✧ <span>Выбрать фильм</span> ✧</button>
+      <p class="hint" id="wheel-hint" aria-live="polite">Подключаем общий список…</p>
+    </section>
+    <section class="result shell" id="result" aria-live="polite" aria-label="Результат выбора"></section>
+    <details class="history shell" id="watched"><summary>Уже посмотрели <span class="count" id="watched-count">0</span><span class="arrow">⌄</span></summary><div class="history-list" id="history-list"></div></details>
+    <footer class="footer shell"><strong>Киновечер</strong><span>Хороший фильм. Своя компания.</span><button type="button" id="logout">Выйти</button></footer>
+  </main>
+  <div class="toast" id="toast" role="alert" hidden></div>
+
+  <script>
+    const CATALOG = __CATALOG_JSON__;
+    const TREE = '<svg class="tree"><use href="#white-tree"></use></svg>';
+    const colors = ["#263d30", "#5d5030", "#31473d", "#625a3d", "#243c3c", "#6c5733", "#3b4932", "#4b4930"];
+    const state = { code: "", films: [], pickedId: null, rotation: 0, spinning: false };
+    const element = (id) => document.getElementById(id);
+    const rpc = (name, ...args) => new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
+    });
+    const save = (key, value) => { try { sessionStorage.setItem(key, value); } catch (_) {} };
+    const load = (key) => { try { return sessionStorage.getItem(key); } catch (_) { return null; } };
+    const forget = (key) => { try { sessionStorage.removeItem(key); } catch (_) {} };
+    function toast(message) {
+      const box = element("toast");
+      box.textContent = message;
+      box.hidden = false;
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => { box.hidden = true; }, 5000);
+    }
+    function stars() {
+      const layer = element("stars");
+      for (let n = 0; n < 48; n++) {
+        const star = document.createElement("i");
+        star.style.left = ((n * 71.43 + 13) % 100) + "%";
+        star.style.top = ((n * 37.61 + 8) % 100) + "%";
+        star.style.setProperty("--s", (n % 7 === 0 ? 3 : 1.5) + "px");
+        star.style.setProperty("--d", (2.2 + n % 5) + "s");
+        star.style.setProperty("--delay", (-n * .37) + "s");
+        layer.appendChild(star);
+      }
+    }
+    function queue() { return state.films.filter((film) => film.status === "queue").reverse(); }
+    function renderWheel() {
+      const films = queue();
+      const disc = element("wheel-disc");
+      disc.replaceChildren();
+      if (films.length) {
+        disc.style.background = "conic-gradient(" + films.map((_, i) => colors[i % colors.length] + " " + (i * 100 / films.length) + "% " + ((i + 1) * 100 / films.length) + "%").join(",") + ")";
+      } else {
+        disc.style.background = "repeating-conic-gradient(#354238 0% 12.5%, #62583b 12.5% 25%)";
+      }
+      films.forEach((film, i) => {
+        const angle = (i + .5) * Math.PI * 2 / films.length - Math.PI / 2;
+        const label = document.createElement("span");
+        label.className = "wheel-label";
+        label.textContent = film.title.length > 24 ? film.title.slice(0, 22) + "…" : film.title;
+        label.style.left = (50 + 32 * Math.cos(angle)) + "%";
+        label.style.top = (50 + 32 * Math.sin(angle)) + "%";
+        label.style.transform = "translate(-50%,-50%) rotate(" + (angle * 180 / Math.PI + (Math.cos(angle) < 0 ? 180 : 0)) + "deg)";
+        label.style.fontSize = films.length > 10 ? "9px" : films.length > 6 ? "11px" : "13px";
+        disc.appendChild(label);
+      });
+      const hub = document.createElement("div");
+      hub.className = "wheel-hub";
+      hub.innerHTML = TREE;
+      disc.appendChild(hub);
+      disc.style.transform = "rotate(" + state.rotation + "deg)";
+      element("spin-button").disabled = state.spinning || !films.length;
+      element("wheel-hint").textContent = state.spinning ? "Ещё мгновение — и выбор сделан" : films.length ? "В колесе: " + films.length + " · Просмотренные не повторяются" : "Пока нет фильмов для выбора.";
+    }
+    function metadata(film) {
+      const key = Object.keys(CATALOG).find((title) => title.toLocaleLowerCase("ru").replace(/ё/g, "е") === film.title.toLocaleLowerCase("ru").replace(/ё/g, "е"));
+      return key ? CATALOG[key] : null;
+    }
+    function renderResult() {
+      const host = element("result");
+      host.replaceChildren();
+      const film = state.films.find((item) => item.id === state.pickedId);
+      if (!film) return;
+      const info = metadata(film);
+      const card = document.createElement("article");
+      card.className = "chosen";
+      const poster = document.createElement("div");
+      poster.className = "poster";
+      if (info && info.poster) {
+        const image = document.createElement("img");
+        image.src = info.poster;
+        image.alt = "Постер «" + film.title + "»";
+        image.onerror = () => { poster.innerHTML = '<div class="poster-fallback">' + TREE + '<span>КИНОВЕЧЕР</span></div>'; };
+        poster.appendChild(image);
+      } else {
+        poster.innerHTML = '<div class="poster-fallback">' + TREE + '<span>КИНОВЕЧЕР</span></div>';
+      }
+      const copy = document.createElement("div");
+      copy.className = "chosen-copy";
+      const caption = document.createElement("span");
+      caption.className = "caps";
+      caption.textContent = "СЕГОДНЯ СМОТРИМ";
+      const title = document.createElement("h2");
+      title.textContent = film.title;
+      copy.append(caption, title);
+      if (info && info.year) {
+        const year = document.createElement("span");
+        year.className = "chosen-year";
+        year.textContent = info.year + (film.title === "Бригада" ? " · сериал" : " · фильм");
+        copy.appendChild(year);
+      }
+      if (film.note) {
+        const note = document.createElement("p");
+        note.className = "chosen-note";
+        note.textContent = film.note;
+        copy.appendChild(note);
+      }
+      const toggle = document.createElement("label");
+      toggle.className = "watched-toggle";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = film.status === "watched";
+      const text = document.createElement("span");
+      text.textContent = checkbox.checked ? "Посмотрели" : "Отметить «Посмотрели»";
+      toggle.append(checkbox, text);
+      checkbox.addEventListener("change", async () => {
+        const checked = checkbox.checked;
+        checkbox.disabled = true;
+        text.textContent = "Сохраняем…";
+        try { await rpc("updateWatched", state.code, film.id, checked); await refresh(); }
+        catch (error) { checkbox.checked = !checked; checkbox.disabled = false; text.textContent = "Отметить «Посмотрели»"; toast(error.message || "Не удалось сохранить отметку."); }
+      });
+      copy.appendChild(toggle);
+      const hint = document.createElement("p");
+      hint.className = "chosen-hint";
+      hint.textContent = checkbox.checked ? "Фильм сохранён в просмотренных и больше не выпадает." : "После просмотра поставьте галочку. Она сохранится у всех.";
+      copy.appendChild(hint);
+      card.append(poster, copy);
+      host.appendChild(card);
+    }
+    function renderHistory() {
+      const watched = state.films.filter((film) => film.status === "watched");
+      element("watched-count").textContent = String(watched.length);
+      const list = element("history-list");
+      list.replaceChildren();
+      if (!watched.length) {
+        const empty = document.createElement("p");
+        empty.className = "history-empty";
+        empty.textContent = "Здесь сохранятся фильмы, которые вы отметите просмотренными.";
+        list.appendChild(empty);
+        return;
+      }
+      watched.forEach((film) => {
+        const row = document.createElement("div");
+        row.className = "history-row";
+        const check = document.createElement("span");
+        check.className = "check";
+        check.textContent = "✓";
+        const title = document.createElement("strong");
+        title.textContent = film.title;
+        const undo = document.createElement("button");
+        undo.type = "button";
+        undo.textContent = "↶";
+        undo.title = "Вернуть в колесо";
+        undo.setAttribute("aria-label", "Вернуть в колесо: " + film.title);
+        undo.addEventListener("click", async () => {
+          undo.disabled = true;
+          try { await rpc("updateWatched", state.code, film.id, false); await refresh(); }
+          catch (error) { undo.disabled = false; toast(error.message || "Не удалось вернуть фильм."); }
+        });
+        row.append(check, title, undo);
+        list.appendChild(row);
+      });
+    }
+    async function refresh() {
+      if (!state.code || state.spinning) return;
+      state.films = await rpc("getFilms", state.code);
+      state.pickedId = Number(load("kinovecher-pick")) || state.pickedId;
+      renderWheel();
+      renderResult();
+      renderHistory();
+    }
+    async function enter(code) {
+      const valid = await rpc("authenticate", code);
+      if (!valid) throw new Error("Неверный код доступа.");
+      state.code = code;
+      await refresh();
+      save("kinovecher-code", code);
+      element("gate").hidden = true;
+      element("app").hidden = false;
+    }
+    function spin() {
+      const films = queue();
+      if (!films.length || state.spinning) return;
+      const index = Math.floor(Math.random() * films.length);
+      const film = films[index];
+      const center = (index + .5) * 360 / films.length;
+      const correction = (360 - center - state.rotation % 360 + 720) % 360;
+      state.rotation += 360 * 6 + correction;
+      state.spinning = true;
+      state.pickedId = null;
+      forget("kinovecher-pick");
+      element("result").replaceChildren();
+      renderWheel();
+      const disc = element("wheel-disc");
+      disc.style.transition = "none";
+      disc.style.transform = "rotate(" + (state.rotation - 360 * 6 - correction) + "deg)";
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        disc.style.transition = "transform 4.6s cubic-bezier(.13,.72,.12,1)";
+        disc.style.transform = "rotate(" + state.rotation + "deg)";
+      }));
+      setTimeout(async () => {
+        state.spinning = false;
+        state.pickedId = film.id;
+        save("kinovecher-pick", String(film.id));
+        renderWheel();
+        renderResult();
+        element("result").scrollIntoView({ behavior: "smooth", block: "center" });
+        try { await refresh(); } catch (error) { toast(error.message || "Не удалось обновить список."); }
+      }, 4700);
+    }
+    element("gate-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = element("enter-button");
+      const errorBox = element("gate-error");
+      button.disabled = true;
+      button.textContent = "Проверяем…";
+      errorBox.textContent = "";
+      try { await enter(element("access-code").value.trim()); }
+      catch (error) { errorBox.textContent = error.message || "Не удалось войти."; }
+      finally { button.disabled = false; button.textContent = "Войти ↗"; }
+    });
+    element("spin-button").addEventListener("click", spin);
+    element("logout").addEventListener("click", () => { state.code = ""; state.films = []; state.pickedId = null; forget("kinovecher-code"); forget("kinovecher-pick"); element("app").hidden = true; element("gate").hidden = false; element("access-code").value = ""; });
+    window.addEventListener("focus", () => { if (state.code && !state.spinning) refresh().catch((error) => toast(error.message || "Не удалось обновить список.")); });
+    setInterval(() => { if (state.code && !state.spinning && !document.hidden) refresh().catch(() => {}); }, 12000);
+    stars();
+    const savedCode = load("kinovecher-code");
+    if (savedCode) enter(savedCode).catch(() => { forget("kinovecher-code"); state.code = ""; });
+  </script>
+</body>
+</html>

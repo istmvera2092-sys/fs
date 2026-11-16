@@ -34,6 +34,9 @@ yarn-error.log*
 # Checkout-local tool state
 /.wrangler/
 /.sites-runtime/
+/google-apps-script/dist/
+/google-apps-script/films.local.json
+/google-apps-script/.clasp.json
 
 # Workspace scaffolding and publication archives
 /.agents/
