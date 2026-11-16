@@ -10,6 +10,7 @@ const html = readFileSync(join(directory, "dist/Index.html"), "utf8");
 const accessCode = readFileSync(join(directory, "../.dev.vars"), "utf8").match(/^FILM_ACCESS_CODE=(.+)$/m)?.[1]?.trim();
 assert.ok(accessCode);
 const values = new Map();
+const metaTags = [];
 const properties = {
   getProperty(key) { return values.get(key) ?? null; },
   getProperties() { return Object.fromEntries(values); },
@@ -20,11 +21,16 @@ const lock = { waitLock() {}, releaseLock() {} };
 const context = vm.createContext({
   PropertiesService: { getScriptProperties: () => properties },
   LockService: { getScriptLock: () => lock },
-  HtmlService: { createHtmlOutputFromFile: () => ({ setTitle() { return this; } }) },
+  HtmlService: { createHtmlOutputFromFile: () => ({
+    addMetaTag(name, content) { metaTags.push({ name, content }); return this; },
+    setTitle() { return this; },
+  }) },
   Date,
   JSON,
 });
 vm.runInContext(source, context);
+context.doGet();
+assert.equal(metaTags.find((tag) => tag.name === "viewport")?.content, "width=device-width, initial-scale=1, viewport-fit=cover");
 assert.equal(context.authenticate("wrong-code"), false);
 assert.equal(context.authenticate(accessCode), true);
 assert.throws(() => context.getFilms("wrong-code"), /Неверный код/);

@@ -6,6 +6,7 @@ const FILM_PREFIX_ = "film:";
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile("Index")
+    .addMetaTag("viewport", "width=device-width, initial-scale=1, viewport-fit=cover")
     .setTitle("Киновечер — что посмотрим сегодня?");
 }
 

@@ -15,6 +15,8 @@ node google-apps-script/test.mjs
 
 Фон и постеры сжимаются и включаются прямо в `Index.html`. Страница не загружает изображения с GitHub или Cloudflare. Список и отметки доступны только после проверки общего кода на сервере Apps Script.
 
+Для правильного масштаба на телефонах `doGet()` задаёт viewport через `HtmlOutput.addMetaTag()`. Метатег, записанный только в `Index.html`, [игнорируется HTML Service](https://developers.google.com/apps-script/reference/html/html-output#addmetatagname_content).
+
 ## Публикация
 
 В [настройках Apps Script](https://script.google.com/home/usersettings) включите **Google Apps Script API**. Установите [clasp](https://developers.google.com/apps-script/guides/clasp) и войдите в нужный Google-аккаунт. Дальнейшие команды выполняются из `google-apps-script/dist`:
