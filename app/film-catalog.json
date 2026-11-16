@@ -2,61 +2,73 @@
   "Запах женщины": {
     "poster": "/posters/scent.jpg",
     "year": "1992",
+    "ratings": { "kinopoisk": 8.4, "imdb": 8.0, "kinopoiskUrl": "https://www.kinopoisk.ru/film/4871/", "imdbUrl": "https://www.imdb.com/title/tt0105323/" },
     "source": "https://en.wikipedia.org/wiki/Scent_of_a_Woman_(1992_film)"
   },
   "Крестный отец": {
     "poster": "/posters/godfather.jpg",
     "year": "1972",
+    "ratings": { "kinopoisk": 8.7, "imdb": 9.2, "kinopoiskUrl": "https://www.kinopoisk.ru/film/325/", "imdbUrl": "https://www.imdb.com/title/tt0068646/" },
     "source": "https://en.wikipedia.org/wiki/The_Godfather"
   },
   "Воспоминание": {
     "poster": "/posters/reminiscence.jpg",
     "year": "2021",
+    "ratings": { "kinopoisk": 6.6, "imdb": 5.9, "kinopoiskUrl": "https://www.kinopoisk.ru/film/811078/", "imdbUrl": "https://www.imdb.com/title/tt3272066/" },
     "source": "https://en.wikipedia.org/wiki/Reminiscence_(2021_film)"
   },
   "Все везде и сразу": {
     "poster": "/posters/everything.jpg",
     "year": "2022",
+    "ratings": { "kinopoisk": 7.2, "imdb": 7.7, "kinopoiskUrl": "https://www.kinopoisk.ru/film/1322324/", "imdbUrl": "https://www.imdb.com/title/tt6710474/" },
     "source": "https://en.wikipedia.org/wiki/Everything_Everywhere_All_at_Once"
   },
   "Паразиты": {
     "poster": "/posters/parasite.jpg",
     "year": "2019",
+    "ratings": { "kinopoisk": 8.1, "imdb": 8.5, "kinopoiskUrl": "https://www.kinopoisk.ru/film/1043758/", "imdbUrl": "https://www.imdb.com/title/tt6751668/" },
     "source": "https://en.wikipedia.org/wiki/Parasite_(2019_film)"
   },
   "Человек который изменил все": {
     "poster": "/posters/moneyball.jpg",
     "year": "2011",
+    "ratings": { "kinopoisk": 7.8, "imdb": 7.6, "kinopoiskUrl": "https://www.kinopoisk.ru/film/432791/", "imdbUrl": "https://www.imdb.com/title/tt1210166/" },
     "source": "https://en.wikipedia.org/wiki/Moneyball_(film)"
   },
   "Собачья жизнь": {
     "poster": "/posters/dogs-purpose.jpg",
     "year": "2017",
+    "ratings": { "kinopoisk": 8.1, "imdb": 7.3, "kinopoiskUrl": "https://www.kinopoisk.ru/film/571896/", "imdbUrl": "https://www.imdb.com/title/tt1753383/" },
     "source": "https://en.wikipedia.org/wiki/A_Dog's_Purpose_(film)"
   },
   "Куда приводят мечты": {
     "poster": "/posters/dreams.jpg",
     "year": "1998",
+    "ratings": { "kinopoisk": 7.9, "imdb": 7.0, "kinopoiskUrl": "https://www.kinopoisk.ru/film/15139/", "imdbUrl": "https://www.imdb.com/title/tt0120889/" },
     "source": "https://en.wikipedia.org/wiki/What_Dreams_May_Come_(film)"
   },
   "Бригада": {
     "poster": "/posters/brigada.jpg",
     "year": "2002",
+    "ratings": { "kinopoisk": 8.3, "imdb": 8.2, "kinopoiskUrl": "https://www.kinopoisk.ru/series/77039/", "imdbUrl": "https://www.imdb.com/title/tt0337898/" },
     "source": "https://en.wikipedia.org/wiki/Brigada"
   },
   "Советник 2013": {
     "poster": "/posters/counselor.jpg",
     "year": "2013",
+    "ratings": { "kinopoisk": 5.6, "imdb": 5.4, "kinopoiskUrl": "https://www.kinopoisk.ru/film/662834/", "imdbUrl": "https://www.imdb.com/title/tt2193215/" },
     "source": "https://en.wikipedia.org/wiki/The_Counselor"
   },
   "Лулу и Бриггс": {
     "poster": "/posters/dog.jpg",
     "year": "2022",
+    "ratings": { "kinopoisk": 7.4, "imdb": 6.5, "kinopoiskUrl": "https://www.kinopoisk.ru/film/1355139/", "imdbUrl": "https://www.imdb.com/title/tt11252248/" },
     "source": "https://en.wikipedia.org/wiki/Dog_(2022_film)"
   },
   "Того": {
     "poster": "/posters/togo.jpg",
     "year": "2019",
+    "ratings": { "kinopoisk": 8.0, "imdb": 7.9, "kinopoiskUrl": "https://www.kinopoisk.ru/film/1173444/", "imdbUrl": "https://www.imdb.com/title/tt5116302/" },
     "source": "https://en.wikipedia.org/wiki/Togo_(film)"
   }
 }

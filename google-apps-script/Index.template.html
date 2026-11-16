@@ -27,6 +27,9 @@
     .header { height: 84px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #d4bd8240; }
     .header a:not(.brand) { color: #e8e5d2; text-decoration: none; font-size: 12px; }
     .header a:hover { color: #fff0ba; }
+    .header-actions { display: flex; align-items: center; gap: 24px; }
+    .logout-button { min-height: 44px; padding: 0 13px; border: 1px solid #d4bd8270; border-radius: 4px; background: #09242bc9; color: #f2dfae; font-size: 12px; }
+    .logout-button:hover { background: #173943; }
     .caps { color: #dec995; font-size: 10px; font-weight: 700; letter-spacing: .22em; }
     .gold-button { min-height: 52px; border: 1px solid #f1dda7; border-radius: 3px; background: linear-gradient(110deg, #a98b4d, #ebd6a4 55%, #bd9f61); color: #14272a; box-shadow: inset 0 0 0 3px #80683b45, 0 9px 30px #0006; padding: 13px 22px; font-weight: 700; }
     .gold-button:hover:not(:disabled) { background: #f2dfa9; }
@@ -71,6 +74,11 @@
     .chosen-copy { padding: 28px; align-self: center; min-width: 0; }
     .chosen-copy h2 { font: 500 clamp(31px, 4vw, 43px)/1.08 Georgia, serif; letter-spacing: -.035em; margin: 10px 0; overflow-wrap: anywhere; }
     .chosen-year { color: #b3c4b5; font-size: 11px; }
+    .ratings { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .rating { display: inline-flex; align-items: baseline; gap: 8px; min-height: 38px; padding: 8px 10px; border: 1px solid #bba36c7a; border-radius: 4px; background: #243b387d; color: #e8dfc6; text-decoration: none; font-size: 11px; }
+    .rating:hover { border-color: #e8d49c; background: #30483e; }
+    .rating strong { color: #f4dd9f; font-size: 15px; line-height: 1; }
+    .rating-date { margin: 5px 0 0; color: #a7b9ad; font-size: 10px; }
     .chosen-note { color: #c9d6c9; font-size: 12px; margin: 12px 0; }
     .watched-toggle { display: flex; align-items: center; gap: 11px; min-height: 48px; margin-top: 19px; color: #f4e4b7; font-size: 13px; cursor: pointer; }
     .watched-toggle input { width: 23px; height: 23px; margin: 0; accent-color: #cfbb87; }
@@ -96,6 +104,8 @@
       .header { height: 70px; }
       .brand { font-size: 25px; }
       .brand .tree { width: 26px; height: 35px; }
+      .header-actions { gap: 8px; }
+      .header-actions a { display: none; }
       .hero { padding-top: 32px; }
       .intro h1 { font-size: clamp(40px, 8vw, 59px); }
       .intro h1 em { display: block; }
@@ -148,7 +158,7 @@
   </main>
 
   <main class="app" id="app" hidden>
-    <header class="header shell"><a class="brand" href="#top"><svg class="tree"><use href="#white-tree"></use></svg><span>Киновечер</span></a><a href="#watched">Просмотрено</a></header>
+    <header class="header shell"><a class="brand" href="#top"><svg class="tree"><use href="#white-tree"></use></svg><span>Киновечер</span></a><div class="header-actions"><a href="#watched">Просмотрено</a><button class="logout-button" type="button" id="logout">Выйти</button></div></header>
     <section class="hero shell" id="top">
       <div class="intro"><span class="caps">ДЛЯ СВОЕЙ КОМПАНИИ</span><h1>Что посмотрим <em>сегодня?</em></h1><p>Собирайтесь вместе. Выбор фильма доверьте колесу.</p></div>
       <div class="wheel-wrap"><div class="wheel-pointer"></div><div class="wheel-rim"><div class="wheel-disc" id="wheel-disc"></div></div></div>
@@ -157,7 +167,7 @@
     </section>
     <section class="result shell" id="result" aria-live="polite" aria-label="Результат выбора"></section>
     <details class="history shell" id="watched"><summary>Уже посмотрели <span class="count" id="watched-count">0</span><span class="arrow">⌄</span></summary><div class="history-list" id="history-list"></div></details>
-    <footer class="footer shell"><strong>Киновечер</strong><span>Хороший фильм. Своя компания.</span><button type="button" id="logout">Выйти</button></footer>
+    <footer class="footer shell"><strong>Киновечер</strong><span>Хороший фильм. Своя компания.</span></footer>
   </main>
   <div class="toast" id="toast" role="alert" hidden></div>
 
@@ -165,7 +175,7 @@
     const CATALOG = __CATALOG_JSON__;
     const TREE = '<svg class="tree"><use href="#white-tree"></use></svg>';
     const colors = ["#263d30", "#5d5030", "#31473d", "#625a3d", "#243c3c", "#6c5733", "#3b4932", "#4b4930"];
-    const state = { code: "", films: [], pickedId: null, rotation: 0, spinning: false };
+    const state = { code: "", films: [], pickedId: null, rotation: 0, spinning: false, authEpoch: 0, spinTimer: null };
     const element = (id) => document.getElementById(id);
     const rpc = (name, ...args) => new Promise((resolve, reject) => {
       google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
@@ -258,6 +268,32 @@
         year.textContent = info.year + (film.title === "Бригада" ? " · сериал" : " · фильм");
         copy.appendChild(year);
       }
+      if (info && info.ratings) {
+        const ratings = document.createElement("div");
+        ratings.className = "ratings";
+        for (const [name, value, url] of [
+          ["Кинопоиск", info.ratings.kinopoisk, info.ratings.kinopoiskUrl],
+          ["IMDb", info.ratings.imdb, info.ratings.imdbUrl]
+        ]) {
+          const link = document.createElement("a");
+          link.className = "rating";
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.title = "Открыть оценку на " + name;
+          const label = document.createElement("span");
+          label.textContent = name;
+          const score = document.createElement("strong");
+          score.textContent = Number(value).toFixed(1).replace(".", ",");
+          link.append(label, score);
+          ratings.appendChild(link);
+        }
+        copy.appendChild(ratings);
+        const ratingDate = document.createElement("p");
+        ratingDate.className = "rating-date";
+        ratingDate.textContent = "Оценки на 16.11.2026";
+        copy.appendChild(ratingDate);
+      }
       if (film.note) {
         const note = document.createElement("p");
         note.className = "chosen-note";
@@ -323,17 +359,29 @@
     }
     async function refresh() {
       if (!state.code || state.spinning) return;
-      state.films = await rpc("getFilms", state.code);
+      const code = state.code;
+      const epoch = state.authEpoch;
+      const films = await rpc("getFilms", code);
+      if (epoch !== state.authEpoch || code !== state.code) return;
+      state.films = films;
       state.pickedId = Number(load("kinovecher-pick")) || state.pickedId;
       renderWheel();
       renderResult();
       renderHistory();
     }
     async function enter(code) {
+      const epoch = ++state.authEpoch;
       const valid = await rpc("authenticate", code);
+      if (epoch !== state.authEpoch) return;
       if (!valid) throw new Error("Неверный код доступа.");
+      const films = await rpc("getFilms", code);
+      if (epoch !== state.authEpoch) return;
       state.code = code;
-      await refresh();
+      state.films = films;
+      state.pickedId = Number(load("kinovecher-pick")) || null;
+      renderWheel();
+      renderResult();
+      renderHistory();
       save("kinovecher-code", code);
       element("gate").hidden = true;
       element("app").hidden = false;
@@ -358,8 +406,9 @@
         disc.style.transition = "transform 4.6s cubic-bezier(.13,.72,.12,1)";
         disc.style.transform = "rotate(" + state.rotation + "deg)";
       }));
-      setTimeout(async () => {
+      state.spinTimer = setTimeout(async () => {
         state.spinning = false;
+        state.spinTimer = null;
         state.pickedId = film.id;
         save("kinovecher-pick", String(film.id));
         renderWheel();
@@ -380,7 +429,22 @@
       finally { button.disabled = false; button.textContent = "Войти ↗"; }
     });
     element("spin-button").addEventListener("click", spin);
-    element("logout").addEventListener("click", () => { state.code = ""; state.films = []; state.pickedId = null; forget("kinovecher-code"); forget("kinovecher-pick"); element("app").hidden = true; element("gate").hidden = false; element("access-code").value = ""; });
+    element("logout").addEventListener("click", () => {
+      state.authEpoch++;
+      clearTimeout(state.spinTimer);
+      state.spinTimer = null;
+      state.spinning = false;
+      state.code = "";
+      state.films = [];
+      state.pickedId = null;
+      forget("kinovecher-code");
+      forget("kinovecher-pick");
+      element("app").hidden = true;
+      element("gate").hidden = false;
+      element("access-code").value = "";
+      element("result").replaceChildren();
+      window.scrollTo(0, 0);
+    });
     window.addEventListener("focus", () => { if (state.code && !state.spinning) refresh().catch((error) => toast(error.message || "Не удалось обновить список.")); });
     setInterval(() => { if (state.code && !state.spinning && !document.hidden) refresh().catch(() => {}); }, 12000);
     stars();
