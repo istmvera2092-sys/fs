@@ -47,4 +47,5 @@ mkdirSync(output, { recursive: true });
 writeFileSync(join(output, "Index.html"), index);
 writeFileSync(join(output, "Code.gs"), code, { mode: 0o600 });
 copyFileSync(join(directory, "appsscript.json"), join(output, "appsscript.json"));
+copyFileSync(join(directory, "Bridge.template.html"), join(output, "Bridge.html"));
 console.log(`Google package ready: ${initialFilms.length} films, ${Math.round(index.length / 1024)} KB page. Access code stays out of Git.`);

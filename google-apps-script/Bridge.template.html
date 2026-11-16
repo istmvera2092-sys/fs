@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Киновечер</title></head>
+<body>
+  <script>
+    const NONCE = '<?= nonce ?>';
+    const CHANNEL = 'kinovecher-bridge-v1';
+    const ACTIONS = new Set(['authenticate', 'getState', 'suggestFilm', 'promoteSuggestion', 'removeSuggestion', 'updateWatched']);
+    window.addEventListener('message', (event) => {
+      const request = event.data;
+      if (!request || request.channel !== CHANNEL || request.nonce !== NONCE ||
+          !Number.isSafeInteger(request.id) || !ACTIONS.has(request.name) ||
+          !Array.isArray(request.args)) return;
+      const reply = (payload) => event.source.postMessage({ channel: CHANNEL, nonce: NONCE, id: request.id, ...payload }, event.origin);
+      google.script.run
+        .withSuccessHandler((value) => reply({ ok: true, value }))
+        .withFailureHandler((error) => reply({ ok: false, error: error && error.message ? error.message : 'Не удалось выполнить действие.' }))
+        [request.name](...request.args);
+    });
+    window.top.postMessage({ channel: CHANNEL, nonce: NONCE, ready: true }, '*');
+  </script>
+</body>
+</html>

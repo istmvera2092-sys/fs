@@ -13,10 +13,10 @@
     body::before { content: ""; position: fixed; inset: 0; z-index: -2; background: linear-gradient(180deg, #04172024, #0417206d 58%, #041720e9), url('__BACKGROUND_DATA__') center / cover no-repeat; }
     body::after { content: ""; position: fixed; inset: 0; z-index: -1; background: linear-gradient(90deg, #03151b50, transparent 25%, transparent 75%, #03151b40); pointer-events: none; }
     [hidden] { display: none !important; }
-    button, input { font: inherit; }
+    button, input, textarea { font: inherit; }
     button { cursor: pointer; }
     button:disabled { cursor: not-allowed; opacity: .55; }
-    button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #f4dda1; outline-offset: 4px; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #f4dda1; outline-offset: 4px; }
     .stars { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
     .stars i { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #fff5d2; box-shadow: 0 0 7px 2px #f6e6b970; animation: twinkle var(--d) ease-in-out var(--delay) infinite alternate; }
     .stars i:nth-child(5n) { box-shadow: 0 0 10px 4px #f6e6b990; }
@@ -83,7 +83,30 @@
     .watched-toggle { display: flex; align-items: center; gap: 11px; min-height: 48px; margin-top: 19px; color: #f4e4b7; font-size: 13px; cursor: pointer; }
     .watched-toggle input { width: 23px; height: 23px; margin: 0; accent-color: #cfbb87; }
     .chosen-hint { color: #a6bcb1; font-size: 10px; margin: 4px 0 0; }
+    .suggestions { margin-top: 50px; border: 1px solid #c6ad7068; border-radius: 5px; background: #071f28d9; padding: 0 20px; }
+    .suggestions summary { min-height: 64px; display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; color: #f1dca8; font-size: 14px; font-weight: 700; }
+    .suggestions summary::-webkit-details-marker { display: none; }
+    .suggestions .count { color: #b9cbba; font-size: 11px; font-weight: 400; }
+    .suggestions .arrow { margin-left: auto; font-size: 20px; }
+    .suggestions[open] .arrow { transform: rotate(180deg); }
+    .suggestion-body { border-top: 1px solid #c6ad7045; padding: 18px 0 22px; }
+    .suggestion-body > p { color: #b8c9bd; font-size: 12px; margin-bottom: 15px; }
+    .suggestion-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+    .suggestion-form input, .suggestion-form textarea { min-width: 0; min-height: 48px; border: 1px solid #bca56d80; border-radius: 3px; background: #041821; color: #fff1d2; padding: 11px 13px; font-size: 14px; }
+    .suggestion-form input::placeholder, .suggestion-form textarea::placeholder { color: #9eaca4; }
+    .suggestion-form textarea { grid-column: 1 / -1; min-height: 75px; resize: vertical; }
+    .suggestion-form .gold-button { grid-column: 2; grid-row: 1; min-height: 48px; }
+    .suggestion-list { margin-top: 18px; }
+    .suggestion-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid #c6ad7040; }
+    .suggestion-info { flex: 1; min-width: 0; }
+    .suggestion-info strong { display: block; color: #f6e8c6; font-size: 13px; overflow-wrap: anywhere; }
+    .suggestion-info span { display: block; color: #b8c9bd; font-size: 11px; overflow-wrap: anywhere; }
+    .suggestion-row button { min-height: 44px; border: 1px solid #bca56d80; border-radius: 3px; background: #153039; color: #ebd49b; padding: 9px 12px; font-size: 11px; }
+    .suggestion-row button:hover { background: #25434a; }
+    .suggestion-row .remove-suggestion { min-width: 44px; padding: 8px; font-size: 18px; }
+    .suggestion-empty { color: #aebfb2; font-size: 12px; margin: 0; }
     .history { margin-top: 54px; border-block: 1px solid #c6ad7045; border-radius: 3px; background: #061c25b9; padding: 0 20px; }
+    .suggestions + .history { margin-top: 16px; }
     .history summary { min-height: 63px; display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; color: #d9e1d1; font-size: 13px; }
     .history summary::-webkit-details-marker { display: none; }
     .history .count { color: #d6c38e; font-size: 11px; }
@@ -117,6 +140,11 @@
       .chosen-copy { padding: 18px 16px; }
       .chosen-copy h2 { font-size: 31px; }
       .watched-toggle { font-size: 12px; }
+      .suggestions { padding: 0 14px; }
+      .suggestion-form { grid-template-columns: 1fr; }
+      .suggestion-form textarea, .suggestion-form .gold-button { grid-column: 1; grid-row: auto; }
+      .suggestion-row { flex-wrap: wrap; }
+      .suggestion-info { flex-basis: 100%; }
       .gate-card { padding: 32px 24px; }
       .gate-card h1 { font-size: 47px; }
     }
@@ -166,6 +194,7 @@
       <p class="hint" id="wheel-hint" aria-live="polite">Подключаем общий список…</p>
     </section>
     <section class="result shell" id="result" aria-live="polite" aria-label="Результат выбора"></section>
+    <details class="suggestions shell" id="suggestions"><summary>✧ Предложить фильм <span class="count" id="suggestion-count">0 предложений</span><span class="arrow">⌄</span></summary><div class="suggestion-body"><p>Предложение увидят все участники. Понравившийся фильм можно добавить в колесо.</p><form class="suggestion-form" id="suggestion-form"><input id="suggestion-title" type="text" maxlength="100" placeholder="Название фильма" aria-label="Название фильма" required><textarea id="suggestion-note" maxlength="280" placeholder="Комментарий — по желанию" aria-label="Комментарий к предложению"></textarea><button class="gold-button" id="suggestion-submit" type="submit">Предложить</button></form><div class="suggestion-list" id="suggestion-list" aria-live="polite"></div></div></details>
     <details class="history shell" id="watched"><summary>Уже посмотрели <span class="count" id="watched-count">0</span><span class="arrow">⌄</span></summary><div class="history-list" id="history-list"></div></details>
     <footer class="footer shell"><strong>Киновечер</strong><span>Хороший фильм. Своя компания.</span></footer>
   </main>
@@ -175,11 +204,13 @@
     const CATALOG = __CATALOG_JSON__;
     const TREE = '<svg class="tree"><use href="#white-tree"></use></svg>';
     const colors = ["#263d30", "#5d5030", "#31473d", "#625a3d", "#243c3c", "#6c5733", "#3b4932", "#4b4930"];
-    const state = { code: "", films: [], pickedId: null, rotation: 0, spinning: false, authEpoch: 0, spinTimer: null };
+    const state = { code: "", films: [], suggestions: [], pickedId: null, rotation: 0, spinning: false, authEpoch: 0, spinTimer: null };
     const element = (id) => document.getElementById(id);
-    const rpc = (name, ...args) => new Promise((resolve, reject) => {
-      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
-    });
+    const rpc = (name, ...args) => window.kinovecherRpc
+      ? window.kinovecherRpc(name, ...args)
+      : new Promise((resolve, reject) => {
+        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
+      });
     const save = (key, value) => { try { sessionStorage.setItem(key, value); } catch (_) {} };
     const load = (key) => { try { return sessionStorage.getItem(key); } catch (_) { return null; } };
     const forget = (key) => { try { sessionStorage.removeItem(key); } catch (_) {} };
@@ -357,31 +388,83 @@
         list.appendChild(row);
       });
     }
+    function renderSuggestions() {
+      const count = state.suggestions.length;
+      element("suggestion-count").textContent = count === 1 ? "1 предложение" : count >= 2 && count <= 4 ? count + " предложения" : count + " предложений";
+      const list = element("suggestion-list");
+      list.replaceChildren();
+      if (!count) {
+        const empty = document.createElement("p");
+        empty.className = "suggestion-empty";
+        empty.textContent = "Пока нет предложений.";
+        list.appendChild(empty);
+        return;
+      }
+      state.suggestions.forEach((suggestion) => {
+        const row = document.createElement("div");
+        row.className = "suggestion-row";
+        const info = document.createElement("div");
+        info.className = "suggestion-info";
+        const title = document.createElement("strong");
+        title.textContent = suggestion.title;
+        info.appendChild(title);
+        if (suggestion.note) {
+          const note = document.createElement("span");
+          note.textContent = suggestion.note;
+          info.appendChild(note);
+        }
+        const promote = document.createElement("button");
+        promote.type = "button";
+        promote.textContent = "В колесо";
+        promote.setAttribute("aria-label", "Добавить в колесо: " + suggestion.title);
+        promote.addEventListener("click", async () => {
+          promote.disabled = true;
+          try { await rpc("promoteSuggestion", state.code, suggestion.id); await refresh(); toast("Фильм добавлен в колесо."); }
+          catch (error) { promote.disabled = false; toast(error.message || "Не удалось добавить фильм."); }
+        });
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "remove-suggestion";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", "Удалить предложение: " + suggestion.title);
+        remove.addEventListener("click", async () => {
+          remove.disabled = true;
+          try { await rpc("removeSuggestion", state.code, suggestion.id); await refresh(); }
+          catch (error) { remove.disabled = false; toast(error.message || "Не удалось удалить предложение."); }
+        });
+        row.append(info, promote, remove);
+        list.appendChild(row);
+      });
+    }
     async function refresh() {
       if (!state.code || state.spinning) return;
       const code = state.code;
       const epoch = state.authEpoch;
-      const films = await rpc("getFilms", code);
+      const data = await rpc("getState", code);
       if (epoch !== state.authEpoch || code !== state.code) return;
-      state.films = films;
+      state.films = data.films;
+      state.suggestions = data.suggestions;
       state.pickedId = Number(load("kinovecher-pick")) || state.pickedId;
       renderWheel();
       renderResult();
       renderHistory();
+      renderSuggestions();
     }
     async function enter(code) {
       const epoch = ++state.authEpoch;
       const valid = await rpc("authenticate", code);
       if (epoch !== state.authEpoch) return;
       if (!valid) throw new Error("Неверный код доступа.");
-      const films = await rpc("getFilms", code);
+      const data = await rpc("getState", code);
       if (epoch !== state.authEpoch) return;
       state.code = code;
-      state.films = films;
+      state.films = data.films;
+      state.suggestions = data.suggestions;
       state.pickedId = Number(load("kinovecher-pick")) || null;
       renderWheel();
       renderResult();
       renderHistory();
+      renderSuggestions();
       save("kinovecher-code", code);
       element("gate").hidden = true;
       element("app").hidden = false;
@@ -429,6 +512,19 @@
       finally { button.disabled = false; button.textContent = "Войти ↗"; }
     });
     element("spin-button").addEventListener("click", spin);
+    element("suggestion-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = element("suggestion-submit");
+      button.disabled = true;
+      button.textContent = "Сохраняем…";
+      try {
+        await rpc("suggestFilm", state.code, element("suggestion-title").value, element("suggestion-note").value);
+        element("suggestion-form").reset();
+        await refresh();
+        toast("Предложение видно всем участникам.");
+      } catch (error) { toast(error.message || "Не удалось сохранить предложение."); }
+      finally { button.disabled = false; button.textContent = "Предложить"; }
+    });
     element("logout").addEventListener("click", () => {
       state.authEpoch++;
       clearTimeout(state.spinTimer);
@@ -436,6 +532,7 @@
       state.spinning = false;
       state.code = "";
       state.films = [];
+      state.suggestions = [];
       state.pickedId = null;
       forget("kinovecher-code");
       forget("kinovecher-pick");

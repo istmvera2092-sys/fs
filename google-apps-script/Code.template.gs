@@ -3,8 +3,18 @@
 const FILM_ACCESS_CODE_ = __ACCESS_CODE_JSON__;
 const INITIAL_FILMS_ = __INITIAL_FILMS_JSON__;
 const FILM_PREFIX_ = "film:";
+const SUGGESTION_PREFIX_ = "suggestion:";
 
-function doGet() {
+function doGet(e) {
+  if (e && e.parameter && e.parameter.mode === "bridge") {
+    const nonce = String(e.parameter.nonce || "");
+    if (!/^[a-f0-9]{32}$/.test(nonce)) throw new Error("Недопустимый запрос.");
+    const template = HtmlService.createTemplateFromFile("Bridge");
+    template.nonce = nonce;
+    return template.evaluate()
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .setTitle("Киновечер");
+  }
   return HtmlService.createHtmlOutputFromFile("Index")
     .addMetaTag("viewport", "width=device-width, initial-scale=1, viewport-fit=cover")
     .setTitle("Киновечер — что посмотрим сегодня?");
@@ -61,6 +71,97 @@ function getFilms(code) {
   return readFilms_();
 }
 
+function readSuggestions_() {
+  const all = PropertiesService.getScriptProperties().getProperties();
+  return Object.keys(all)
+    .filter((key) => key.indexOf(SUGGESTION_PREFIX_) === 0 && key !== "suggestion:nextId")
+    .map((key) => JSON.parse(all[key]))
+    .sort((a, b) => b.id - a.id);
+}
+
+function getState(code) {
+  requireAccess_(code);
+  ensureFilms_();
+  return { films: readFilms_(), suggestions: readSuggestions_() };
+}
+
+function cleanTitle_(title) {
+  title = typeof title === "string" ? title.trim().replace(/\s+/g, " ") : "";
+  if (!title || title.length > 100) throw new Error("Укажите название фильма до 100 символов.");
+  return title;
+}
+
+function cleanNote_(note) {
+  note = typeof note === "string" ? note.trim() : "";
+  if (note.length > 280) throw new Error("Комментарий слишком длинный.");
+  return note;
+}
+
+function sameTitle_(a, b) {
+  return a.toLocaleLowerCase("ru").replace(/ё/g, "е") === b.toLocaleLowerCase("ru").replace(/ё/g, "е");
+}
+
+function suggestFilm(code, title, note) {
+  requireAccess_(code);
+  title = cleanTitle_(title);
+  note = cleanNote_(note);
+  ensureFilms_();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if (readFilms_().some((film) => sameTitle_(film.title, title)) ||
+        readSuggestions_().some((item) => sameTitle_(item.title, title))) {
+      throw new Error("Такой фильм уже есть в списке или предложениях.");
+    }
+    const properties = PropertiesService.getScriptProperties();
+    const id = Number(properties.getProperty("suggestion:nextId") || "1");
+    const suggestion = { id, title, note, createdAt: new Date().toISOString() };
+    properties.setProperties({ [SUGGESTION_PREFIX_ + id]: JSON.stringify(suggestion), "suggestion:nextId": String(id + 1) });
+    return suggestion;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function promoteSuggestion(code, id) {
+  requireAccess_(code);
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Предложение не найдено.");
+  ensureFilms_();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const raw = properties.getProperty(SUGGESTION_PREFIX_ + id);
+    if (!raw) throw new Error("Предложение уже обработано.");
+    const suggestion = JSON.parse(raw);
+    if (readFilms_().some((film) => sameTitle_(film.title, suggestion.title))) {
+      throw new Error("Такой фильм уже есть в колесе.");
+    }
+    const filmId = Number(properties.getProperty("films:nextId"));
+    const film = { id: filmId, title: suggestion.title, note: suggestion.note, status: "queue", createdAt: new Date().toISOString(), watchedAt: null };
+    properties.setProperties({ [FILM_PREFIX_ + filmId]: JSON.stringify(film), "films:nextId": String(filmId + 1) });
+    properties.deleteProperty(SUGGESTION_PREFIX_ + id);
+    return film;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function removeSuggestion(code, id) {
+  requireAccess_(code);
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Предложение не найдено.");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    if (!properties.getProperty(SUGGESTION_PREFIX_ + id)) throw new Error("Предложение уже удалено.");
+    properties.deleteProperty(SUGGESTION_PREFIX_ + id);
+    return true;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function updateWatched(code, id, watched) {
   requireAccess_(code);
   if (!Number.isSafeInteger(id) || id < 1 || typeof watched !== "boolean") {
@@ -83,19 +184,16 @@ function updateWatched(code, id, watched) {
   }
 }
 
-// Available for later additions; the current site deliberately has no add form.
 function addFilm(code, title, note) {
   requireAccess_(code);
-  title = typeof title === "string" ? title.trim().replace(/\s+/g, " ") : "";
-  note = typeof note === "string" ? note.trim() : "";
-  if (!title || title.length > 100) throw new Error("Укажите название фильма до 100 символов.");
-  if (note.length > 280) throw new Error("Комментарий слишком длинный.");
+  title = cleanTitle_(title);
+  note = cleanNote_(note);
   ensureFilms_();
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const existing = readFilms_();
-    if (existing.some((film) => film.title.toLocaleLowerCase("ru") === title.toLocaleLowerCase("ru"))) {
+    if (existing.some((film) => sameTitle_(film.title, title))) {
       throw new Error("Такой фильм уже есть в списке.");
     }
     const properties = PropertiesService.getScriptProperties();

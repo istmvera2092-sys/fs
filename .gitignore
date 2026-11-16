@@ -25,6 +25,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+firebase-debug.log*
+firebase-debug.*.log
 
 # Local environment and keys
 .env*
@@ -33,6 +35,7 @@ yarn-error.log*
 
 # Checkout-local tool state
 /.wrangler/
+/.firebase/
 /.sites-runtime/
 /google-apps-script/dist/
 /google-apps-script/films.local.json
