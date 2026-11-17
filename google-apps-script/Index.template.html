@@ -180,7 +180,7 @@
         <div class="gate-error" id="gate-error" role="alert"></div>
         <button class="gold-button" id="enter-button" type="submit">Войти ↗</button>
       </form>
-      <small>Код один для всех приглашённых участников.</small>
+      <small>Вход сохранится на этом устройстве, пока вы не нажмёте «Выйти».</small>
     </section>
     <footer class="gate-footer">Хороший фильм. Своя компания.</footer>
   </main>
@@ -214,6 +214,9 @@
     const save = (key, value) => { try { sessionStorage.setItem(key, value); } catch (_) {} };
     const load = (key) => { try { return sessionStorage.getItem(key); } catch (_) { return null; } };
     const forget = (key) => { try { sessionStorage.removeItem(key); } catch (_) {} };
+    const remember = (value) => { try { localStorage.setItem("kinovecher-session", value); } catch (_) {} };
+    const remembered = () => { try { return localStorage.getItem("kinovecher-session"); } catch (_) { return null; } };
+    const forgetRemembered = () => { try { localStorage.removeItem("kinovecher-session"); } catch (_) {} };
     function toast(message) {
       const box = element("toast");
       box.textContent = message;
@@ -454,7 +457,11 @@
       const epoch = ++state.authEpoch;
       const valid = await rpc("authenticate", code);
       if (epoch !== state.authEpoch) return;
-      if (!valid) throw new Error("Неверный код доступа.");
+      if (!valid) {
+        const error = new Error("Вход больше не действует. Введите код снова.");
+        error.invalidSession = true;
+        throw error;
+      }
       const data = await rpc("getState", code);
       if (epoch !== state.authEpoch) return;
       state.code = code;
@@ -465,7 +472,8 @@
       renderResult();
       renderHistory();
       renderSuggestions();
-      save("kinovecher-code", code);
+      remember(code);
+      forget("kinovecher-code");
       element("gate").hidden = true;
       element("app").hidden = false;
     }
@@ -507,7 +515,11 @@
       button.disabled = true;
       button.textContent = "Проверяем…";
       errorBox.textContent = "";
-      try { await enter(element("access-code").value.trim()); }
+      try {
+        const token = await rpc("createSession", element("access-code").value.trim());
+        remember(token);
+        await enter(token);
+      }
       catch (error) { errorBox.textContent = error.message || "Не удалось войти."; }
       finally { button.disabled = false; button.textContent = "Войти ↗"; }
     });
@@ -518,14 +530,15 @@
       button.disabled = true;
       button.textContent = "Сохраняем…";
       try {
-        await rpc("suggestFilm", state.code, element("suggestion-title").value, element("suggestion-note").value);
+        const saved = await rpc("suggestFilm", state.code, element("suggestion-title").value, element("suggestion-note").value);
         element("suggestion-form").reset();
         await refresh();
-        toast("Предложение видно всем участникам.");
+        toast(saved.notificationQueued ? "Предложение видно всем. Уведомление придёт на почту." : "Предложение сохранено.");
       } catch (error) { toast(error.message || "Не удалось сохранить предложение."); }
       finally { button.disabled = false; button.textContent = "Предложить"; }
     });
     element("logout").addEventListener("click", () => {
+      const token = state.code;
       state.authEpoch++;
       clearTimeout(state.spinTimer);
       state.spinTimer = null;
@@ -535,18 +548,29 @@
       state.suggestions = [];
       state.pickedId = null;
       forget("kinovecher-code");
+      forgetRemembered();
       forget("kinovecher-pick");
       element("app").hidden = true;
       element("gate").hidden = false;
       element("access-code").value = "";
       element("result").replaceChildren();
       window.scrollTo(0, 0);
+      if (token) rpc("revokeSession", token).catch(() => {});
     });
     window.addEventListener("focus", () => { if (state.code && !state.spinning) refresh().catch((error) => toast(error.message || "Не удалось обновить список.")); });
     setInterval(() => { if (state.code && !state.spinning && !document.hidden) refresh().catch(() => {}); }, 12000);
     stars();
-    const savedCode = load("kinovecher-code");
-    if (savedCode) enter(savedCode).catch(() => { forget("kinovecher-code"); state.code = ""; });
+    const savedToken = remembered();
+    if (savedToken) enter(savedToken).catch((error) => {
+      if (error.invalidSession) forgetRemembered();
+      else element("gate-error").textContent = "Не удалось подключиться. Обновите страницу.";
+      state.code = "";
+    });
+    else {
+      const legacyCode = load("kinovecher-code");
+      if (legacyCode) rpc("createSession", legacyCode).then((token) => { remember(token); return enter(token); })
+        .catch(() => { forget("kinovecher-code"); state.code = ""; });
+    }
   </script>
 </body>
 </html>

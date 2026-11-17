@@ -4,8 +4,17 @@ const FILM_ACCESS_CODE_ = __ACCESS_CODE_JSON__;
 const INITIAL_FILMS_ = __INITIAL_FILMS_JSON__;
 const FILM_PREFIX_ = "film:";
 const SUGGESTION_PREFIX_ = "suggestion:";
+const SESSION_PREFIX_ = "session:";
+const NOTIFY_PREFIX_ = "notify:";
+const NOTIFY_KEY_ = __NOTIFY_KEY_JSON__;
 
 function doGet(e) {
+  if (e && e.parameter && (e.parameter.mode === "notifications" || e.parameter.mode === "notificationAck")) {
+    const params = e.parameter;
+    if (params.key !== NOTIFY_KEY_) throw new Error("Доступ запрещён.");
+    const result = params.mode === "notifications" ? pendingNotifications_() : acknowledgeNotification_(params.id);
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  }
   if (e && e.parameter && e.parameter.mode === "bridge") {
     const nonce = String(e.parameter.nonce || "");
     if (!/^[a-f0-9]{32}$/.test(nonce)) throw new Error("Недопустимый запрос.");
@@ -20,12 +29,55 @@ function doGet(e) {
     .setTitle("Киновечер — что посмотрим сегодня?");
 }
 
-function authenticate(code) {
-  return typeof code === "string" && code === FILM_ACCESS_CODE_;
+function authenticate(credential) {
+  if (typeof credential !== "string") return false;
+  if (credential === FILM_ACCESS_CODE_) return true;
+  if (!/^[a-f0-9]{64}$/.test(credential)) return false;
+  return PropertiesService.getScriptProperties().getProperty(SESSION_PREFIX_ + credential) === "1";
 }
 
-function requireAccess_(code) {
-  if (!authenticate(code)) throw new Error("Неверный код доступа.");
+function requireAccess_(credential) {
+  if (!authenticate(credential)) throw new Error("Доступ не подтверждён. Войдите снова по коду.");
+}
+
+function createSession(code) {
+  if (typeof code !== "string" || code !== FILM_ACCESS_CODE_) throw new Error("Неверный код доступа.");
+  const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, "").toLowerCase();
+  PropertiesService.getScriptProperties().setProperty(SESSION_PREFIX_ + token, "1");
+  return token;
+}
+
+function revokeSession(token) {
+  if (typeof token !== "string" || !/^[a-f0-9]{64}$/.test(token)) return false;
+  PropertiesService.getScriptProperties().deleteProperty(SESSION_PREFIX_ + token);
+  return true;
+}
+
+function pendingNotifications_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const all = properties.getProperties();
+    const now = Date.now();
+    const pending = [];
+    Object.keys(all).filter((key) => key.indexOf(NOTIFY_PREFIX_) === 0).forEach((key) => {
+      const item = JSON.parse(all[key]);
+      if (item.claimedUntil && item.claimedUntil > now) return;
+      item.claimedUntil = now + 5 * 60 * 1000;
+      properties.setProperty(key, JSON.stringify(item));
+      pending.push({ id: item.id, title: item.title, note: item.note });
+    });
+    return pending;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function acknowledgeNotification_(id) {
+  if (!/^\d+$/.test(String(id || ""))) throw new Error("Неверное уведомление.");
+  PropertiesService.getScriptProperties().deleteProperty(NOTIFY_PREFIX_ + id);
+  return { ok: true };
 }
 
 function ensureFilms_() {
@@ -108,6 +160,7 @@ function suggestFilm(code, title, note) {
   ensureFilms_();
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
+  let suggestion;
   try {
     if (readFilms_().some((film) => sameTitle_(film.title, title)) ||
         readSuggestions_().some((item) => sameTitle_(item.title, title))) {
@@ -115,12 +168,16 @@ function suggestFilm(code, title, note) {
     }
     const properties = PropertiesService.getScriptProperties();
     const id = Number(properties.getProperty("suggestion:nextId") || "1");
-    const suggestion = { id, title, note, createdAt: new Date().toISOString() };
-    properties.setProperties({ [SUGGESTION_PREFIX_ + id]: JSON.stringify(suggestion), "suggestion:nextId": String(id + 1) });
-    return suggestion;
+    suggestion = { id, title, note, createdAt: new Date().toISOString() };
+    properties.setProperties({
+      [SUGGESTION_PREFIX_ + id]: JSON.stringify(suggestion),
+      [NOTIFY_PREFIX_ + id]: JSON.stringify(suggestion),
+      "suggestion:nextId": String(id + 1),
+    });
   } finally {
     lock.releaseLock();
   }
+  return { ...suggestion, notificationQueued: true };
 }
 
 function promoteSuggestion(code, id) {

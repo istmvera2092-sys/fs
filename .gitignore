@@ -40,6 +40,8 @@ firebase-debug.*.log
 /google-apps-script/dist/
 /google-apps-script/films.local.json
 /google-apps-script/.clasp.json
+/google-notifier/dist/
+/google-notifier/.clasp.json
 
 # Workspace scaffolding and publication archives
 /.agents/

@@ -10,6 +10,8 @@ const envFile = join(root, ".dev.vars");
 if (!existsSync(envFile)) throw new Error("Create .dev.vars in the repository root before building.");
 const accessCode = readFileSync(envFile, "utf8").match(/^FILM_ACCESS_CODE=(.+)$/m)?.[1]?.trim();
 if (!accessCode) throw new Error("FILM_ACCESS_CODE is missing from .dev.vars.");
+const notifyKey = readFileSync(envFile, "utf8").match(/^FILM_NOTIFY_KEY=(.+)$/m)?.[1]?.trim();
+if (!notifyKey || notifyKey.length < 48) throw new Error("FILM_NOTIFY_KEY is missing or too short in .dev.vars.");
 
 const seedPath = existsSync(join(directory, "films.local.json"))
   ? join(directory, "films.local.json")
@@ -38,9 +40,10 @@ const index = readFileSync(join(directory, "Index.template.html"), "utf8")
   .replace("__CATALOG_JSON__", JSON.stringify(catalog));
 const code = readFileSync(join(directory, "Code.template.gs"), "utf8")
   .replace("__ACCESS_CODE_JSON__", JSON.stringify(accessCode))
+  .replace("__NOTIFY_KEY_JSON__", JSON.stringify(notifyKey))
   .replace("__INITIAL_FILMS_JSON__", JSON.stringify(initialFilms));
 if (index.includes("__BACKGROUND_DATA__") || index.includes("__CATALOG_JSON__") ||
-    code.includes("__ACCESS_CODE_JSON__") || code.includes("__INITIAL_FILMS_JSON__")) {
+    code.includes("__ACCESS_CODE_JSON__") || code.includes("__NOTIFY_KEY_JSON__") || code.includes("__INITIAL_FILMS_JSON__")) {
   throw new Error("An Apps Script template placeholder was not replaced.");
 }
 mkdirSync(output, { recursive: true });
