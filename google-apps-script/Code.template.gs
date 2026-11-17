@@ -9,10 +9,11 @@ const NOTIFY_PREFIX_ = "notify:";
 const NOTIFY_KEY_ = __NOTIFY_KEY_JSON__;
 
 function doGet(e) {
-  if (e && e.parameter && (e.parameter.mode === "notifications" || e.parameter.mode === "notificationAck")) {
+  if (e && e.parameter && (e.parameter.mode === "notifications" || e.parameter.mode === "notificationAck" || e.parameter.mode === "notificationStatus")) {
     const params = e.parameter;
     if (params.key !== NOTIFY_KEY_) throw new Error("Доступ запрещён.");
-    const result = params.mode === "notifications" ? pendingNotifications_() : acknowledgeNotification_(params.id);
+    const result = params.mode === "notifications" ? pendingNotifications_() :
+      params.mode === "notificationAck" ? acknowledgeNotification_(params.id) : notificationStatus_();
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
   }
   if (e && e.parameter && e.parameter.mode === "bridge") {
@@ -72,6 +73,11 @@ function pendingNotifications_() {
   } finally {
     lock.releaseLock();
   }
+}
+
+function notificationStatus_() {
+  const all = PropertiesService.getScriptProperties().getProperties();
+  return { pending: Object.keys(all).filter((key) => key.indexOf(NOTIFY_PREFIX_) === 0).length };
 }
 
 function acknowledgeNotification_(id) {

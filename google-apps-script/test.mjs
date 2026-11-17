@@ -69,12 +69,14 @@ assert.throws(() => context.suggestFilm("wrong-code", "Ещё фильм", ""), 
 assert.throws(() => context.suggestFilm(accessCode, films[0].title, ""), /уже есть/);
 const suggestion = context.suggestFilm(accessCode, "Ещё фильм", "Посмотреть вместе");
 assert.equal(suggestion.notificationQueued, true);
+assert.equal(JSON.parse(context.doGet({ parameter: { mode: "notificationStatus", key: notifyKey } }).content).pending, 1);
 assert.throws(() => context.doGet({ parameter: { mode: "notifications", key: "wrong" } }), /Доступ запрещён/);
 const notifications = JSON.parse(context.doGet({ parameter: { mode: "notifications", key: notifyKey } }).content);
 assert.equal(notifications.length, 1);
 assert.equal(notifications[0].title, "Ещё фильм");
 assert.equal(JSON.parse(context.doGet({ parameter: { mode: "notifications", key: notifyKey } }).content).length, 0);
 assert.deepEqual(JSON.parse(context.doGet({ parameter: { mode: "notificationAck", key: notifyKey, id: String(suggestion.id) } }).content), { ok: true });
+assert.equal(JSON.parse(context.doGet({ parameter: { mode: "notificationStatus", key: notifyKey } }).content).pending, 0);
 assert.equal(context.getState(accessCode).suggestions.length, 1);
 assert.throws(() => context.suggestFilm(accessCode, "ещё фильм", ""), /уже есть/);
 assert.equal(context.promoteSuggestion(accessCode, suggestion.id).title, "Ещё фильм");
