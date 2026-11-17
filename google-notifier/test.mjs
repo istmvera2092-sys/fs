@@ -8,7 +8,7 @@ const directory = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(directory, "dist/Code.gs"), "utf8");
 const sent = [];
 const acked = [];
-const pending = [{ id: 1, title: "Тестовый фильм", note: "Совет от компании" }];
+const pending = [{ id: 1, title: "Тестовый фильм" }];
 const triggers = [];
 const context = vm.createContext({
   UrlFetchApp: { fetch(url) {
@@ -32,7 +32,8 @@ assert.equal(context.setupNotifier(), 1);
 assert.equal(triggers.length, 1);
 assert.equal(sent.length, 1);
 assert.equal(sent[0][0], "GovorunGoorushky@yandex.ru");
-assert.ok(sent[0][2].includes("Совет от компании"));
+assert.ok(sent[0][2].includes("Тестовый фильм"));
+assert.ok(!sent[0][2].includes("Комментарий"));
 assert.deepEqual(acked, ["1"]);
 context.setupNotifier();
 assert.equal(triggers.length, 1);

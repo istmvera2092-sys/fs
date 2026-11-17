@@ -16,10 +16,8 @@ function sendPendingNotifications() {
   const pending = queueRequest_("notifications");
   if (!Array.isArray(pending)) throw new Error("Неверный ответ очереди уведомлений.");
   pending.forEach((item) => {
-    const subject = "Киновечер: предложили фильм «" + item.title + "»";
-    const body = "Новый фильм: " + item.title + "\n" +
-      (item.note ? "Комментарий: " + item.note + "\n" : "") +
-      "\nОткрыть Киновечер: " + SITE_URL_;
+    const subject = "Киновечер: добавили фильм «" + item.title + "»";
+    const body = "В колесо добавлен фильм: " + item.title + "\n\nОткрыть Киновечер: " + SITE_URL_;
     MailApp.sendEmail(RECIPIENT_, subject, body);
     queueRequest_("notificationAck", item.id);
   });

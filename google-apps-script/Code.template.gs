@@ -29,7 +29,6 @@ function doGet(e) {
     .addMetaTag("viewport", "width=device-width, initial-scale=1, viewport-fit=cover")
     .setTitle("Киновечер — что посмотрим сегодня?");
 }
-
 function authenticate(credential) {
   if (typeof credential !== "string") return false;
   if (credential === FILM_ACCESS_CODE_) return true;
@@ -67,14 +66,13 @@ function pendingNotifications_() {
       if (item.claimedUntil && item.claimedUntil > now) return;
       item.claimedUntil = now + 5 * 60 * 1000;
       properties.setProperty(key, JSON.stringify(item));
-      pending.push({ id: item.id, title: item.title, note: item.note });
+      pending.push({ id: item.id, title: item.title });
     });
     return pending;
   } finally {
     lock.releaseLock();
   }
 }
-
 function notificationStatus_() {
   const all = PropertiesService.getScriptProperties().getProperties();
   return { pending: Object.keys(all).filter((key) => key.indexOf(NOTIFY_PREFIX_) === 0).length };
@@ -126,6 +124,7 @@ function readFilms_() {
 function getFilms(code) {
   requireAccess_(code);
   ensureFilms_();
+  migrateSuggestions_();
   return readFilms_();
 }
 
@@ -140,7 +139,36 @@ function readSuggestions_() {
 function getState(code) {
   requireAccess_(code);
   ensureFilms_();
-  return { films: readFilms_(), suggestions: readSuggestions_() };
+  migrateSuggestions_();
+  return { films: readFilms_(), suggestions: [] };
+}
+
+function migrateSuggestions_() {
+  if (!readSuggestions_().length) return;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const suggestions = readSuggestions_();
+    if (!suggestions.length) return;
+    const properties = PropertiesService.getScriptProperties();
+    const films = readFilms_();
+    const entries = {};
+    let nextId = Number(properties.getProperty("films:nextId"));
+    suggestions.slice().reverse().forEach((suggestion) => {
+      if (films.some((film) => sameTitle_(film.title, suggestion.title))) return;
+      const film = {
+        id: nextId++, title: suggestion.title, note: "", status: "queue",
+        createdAt: suggestion.createdAt || new Date().toISOString(), watchedAt: null,
+      };
+      films.push(film);
+      entries[FILM_PREFIX_ + film.id] = JSON.stringify(film);
+    });
+    entries["films:nextId"] = String(nextId);
+    properties.setProperties(entries);
+    suggestions.forEach((suggestion) => properties.deleteProperty(SUGGESTION_PREFIX_ + suggestion.id));
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function cleanTitle_(title) {
@@ -149,77 +177,32 @@ function cleanTitle_(title) {
   return title;
 }
 
-function cleanNote_(note) {
-  note = typeof note === "string" ? note.trim() : "";
-  if (note.length > 280) throw new Error("Комментарий слишком длинный.");
-  return note;
-}
-
 function sameTitle_(a, b) {
   return a.toLocaleLowerCase("ru").replace(/ё/g, "е") === b.toLocaleLowerCase("ru").replace(/ё/g, "е");
 }
 
-function suggestFilm(code, title, note) {
+function suggestFilm(code, title) {
   requireAccess_(code);
   title = cleanTitle_(title);
-  note = cleanNote_(note);
   ensureFilms_();
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  let suggestion;
-  try {
-    if (readFilms_().some((film) => sameTitle_(film.title, title)) ||
-        readSuggestions_().some((item) => sameTitle_(item.title, title))) {
-      throw new Error("Такой фильм уже есть в списке или предложениях.");
-    }
-    const properties = PropertiesService.getScriptProperties();
-    const id = Number(properties.getProperty("suggestion:nextId") || "1");
-    suggestion = { id, title, note, createdAt: new Date().toISOString() };
-    properties.setProperties({
-      [SUGGESTION_PREFIX_ + id]: JSON.stringify(suggestion),
-      [NOTIFY_PREFIX_ + id]: JSON.stringify(suggestion),
-      "suggestion:nextId": String(id + 1),
-    });
-  } finally {
-    lock.releaseLock();
-  }
-  return { ...suggestion, notificationQueued: true };
-}
-
-function promoteSuggestion(code, id) {
-  requireAccess_(code);
-  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Предложение не найдено.");
-  ensureFilms_();
+  migrateSuggestions_();
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const properties = PropertiesService.getScriptProperties();
-    const raw = properties.getProperty(SUGGESTION_PREFIX_ + id);
-    if (!raw) throw new Error("Предложение уже обработано.");
-    const suggestion = JSON.parse(raw);
-    if (readFilms_().some((film) => sameTitle_(film.title, suggestion.title))) {
+    if (readFilms_().some((film) => sameTitle_(film.title, title))) {
       throw new Error("Такой фильм уже есть в колесе.");
     }
-    const filmId = Number(properties.getProperty("films:nextId"));
-    const film = { id: filmId, title: suggestion.title, note: suggestion.note, status: "queue", createdAt: new Date().toISOString(), watchedAt: null };
-    properties.setProperties({ [FILM_PREFIX_ + filmId]: JSON.stringify(film), "films:nextId": String(filmId + 1) });
-    properties.deleteProperty(SUGGESTION_PREFIX_ + id);
-    return film;
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function removeSuggestion(code, id) {
-  requireAccess_(code);
-  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Предложение не найдено.");
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
     const properties = PropertiesService.getScriptProperties();
-    if (!properties.getProperty(SUGGESTION_PREFIX_ + id)) throw new Error("Предложение уже удалено.");
-    properties.deleteProperty(SUGGESTION_PREFIX_ + id);
-    return true;
+    const filmId = Number(properties.getProperty("films:nextId"));
+    const notificationId = Number(properties.getProperty("notifications:nextId") || properties.getProperty("suggestion:nextId") || "1");
+    const film = { id: filmId, title, note: "", status: "queue", createdAt: new Date().toISOString(), watchedAt: null };
+    properties.setProperties({
+      [FILM_PREFIX_ + filmId]: JSON.stringify(film),
+      [NOTIFY_PREFIX_ + notificationId]: JSON.stringify({ id: notificationId, title }),
+      "films:nextId": String(filmId + 1),
+      "notifications:nextId": String(notificationId + 1),
+    });
+    return { ...film, notificationQueued: true };
   } finally {
     lock.releaseLock();
   }
@@ -241,28 +224,6 @@ function updateWatched(code, id, watched) {
     film.status = watched ? "watched" : "queue";
     film.watchedAt = watched ? new Date().toISOString() : null;
     properties.setProperty(FILM_PREFIX_ + id, JSON.stringify(film));
-    return film;
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function addFilm(code, title, note) {
-  requireAccess_(code);
-  title = cleanTitle_(title);
-  note = cleanNote_(note);
-  ensureFilms_();
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const existing = readFilms_();
-    if (existing.some((film) => sameTitle_(film.title, title))) {
-      throw new Error("Такой фильм уже есть в списке.");
-    }
-    const properties = PropertiesService.getScriptProperties();
-    const id = Number(properties.getProperty("films:nextId"));
-    const film = { id, title, note, status: "queue", createdAt: new Date().toISOString(), watchedAt: null };
-    properties.setProperties({ [FILM_PREFIX_ + id]: JSON.stringify(film), "films:nextId": String(id + 1) });
     return film;
   } finally {
     lock.releaseLock();
