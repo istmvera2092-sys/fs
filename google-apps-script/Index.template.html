@@ -82,16 +82,25 @@
     .watched-toggle { display: flex; align-items: center; gap: 11px; min-height: 48px; margin-top: 19px; color: #f4e4b7; font-size: 13px; cursor: pointer; }
     .watched-toggle input { width: 23px; height: 23px; margin: 0; accent-color: #cfbb87; }
     .chosen-hint { color: #a6bcb1; font-size: 10px; margin: 4px 0 0; }
+    .remove-button { min-height: 44px; border: 1px solid #ce968675; border-radius: 4px; background: transparent; color: #f6c6b8; padding: 8px 12px; font-size: 13px; }
+    .remove-button:hover:not(:disabled) { background: #743c384d; }
+    .chosen-copy .remove-button { margin-top: 12px; text-align: left; }
+    .remove-dialog { width: min(380px, calc(100% - 32px)); border: 1px solid #c6ad708c; border-radius: 6px; background: #102c33; color: #f4e4b7; padding: 20px; }
+    .remove-dialog::backdrop { background: #0009; }
+    .remove-dialog p { margin-top: 0; overflow-wrap: anywhere; }
+    .remove-dialog form { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
     .add-film { margin-top: 50px; border: 1px solid #c6ad7068; border-radius: 5px; background: #071f28d9; padding: 0 20px; }
     .add-film summary { min-height: 64px; display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; color: #f1dca8; font-size: 14px; font-weight: 700; }
     .add-film summary::-webkit-details-marker { display: none; }
     .add-film .arrow { margin-left: auto; font-size: 20px; }
     .add-film[open] .arrow { transform: rotate(180deg); }
     .add-film-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; border-top: 1px solid #c6ad7045; padding: 18px 0 22px; }
-    .add-film-form input { min-width: 0; min-height: 48px; border: 1px solid #bca56d80; border-radius: 3px; background: #041821; color: #fff1d2; padding: 11px 13px; font-size: 14px; }
+    .add-film-form input, .add-film-form select { min-width: 0; min-height: 48px; border: 1px solid #bca56d80; border-radius: 3px; background: #041821; color: #fff1d2; padding: 11px 13px; font-size: 14px; }
     .add-film-form input::placeholder { color: #9eaca4; }
     .history { margin-top: 54px; border-block: 1px solid #c6ad7045; border-radius: 3px; background: #061c25b9; padding: 0 20px; }
     .add-film + .history { margin-top: 16px; }
+    .add-film + .add-film { margin-top: 16px; }
+    #watching .chosen + .chosen { margin-top: 16px; }
     .history summary { min-height: 63px; display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; color: #d9e1d1; font-size: 13px; }
     .history summary::-webkit-details-marker { display: none; }
     .history .count { color: #d6c38e; font-size: 11px; }
@@ -176,17 +185,32 @@
       <p class="hint" id="wheel-hint" aria-live="polite">Подключаем общий список…</p>
     </section>
     <section class="result shell" id="result" aria-live="polite" aria-label="Результат выбора"></section>
+    <section class="result shell" id="watching" aria-label="Сейчас смотрим"></section>
     <details class="add-film shell" id="add-film"><summary>✧ Добавить фильм в колесо <span class="arrow">⌄</span></summary><form class="add-film-form" id="add-film-form"><input id="film-title" type="text" maxlength="100" placeholder="Название фильма" aria-label="Название фильма" required><button class="gold-button" id="add-film-submit" type="submit">Добавить</button></form></details>
+    <details class="add-film shell" id="remove-film" hidden>
+      <summary>Удалить фильм из колеса <span class="arrow">⌄</span></summary>
+      <form class="add-film-form" id="remove-film-form">
+        <select id="remove-film-select" aria-label="Фильм для удаления" required></select>
+        <button class="remove-button" id="remove-film-submit" type="submit">Удалить</button>
+      </form>
+    </details>
     <details class="history shell" id="watched"><summary>Уже посмотрели <span class="count" id="watched-count">0</span><span class="arrow">⌄</span></summary><div class="history-list" id="history-list"></div></details>
     <footer class="footer shell"><strong>Киновечер</strong><span>Хороший фильм. Своя компания.</span></footer>
   </main>
   <div class="toast" id="toast" role="alert" hidden></div>
+  <dialog class="remove-dialog" id="remove-dialog" aria-labelledby="remove-question">
+    <p id="remove-question"></p>
+    <form method="dialog" id="remove-confirm-form">
+      <button class="gold-button" value="cancel" autofocus>Отмена</button>
+      <button class="remove-button" value="remove">Удалить</button>
+    </form>
+  </dialog>
 
   <script>
     const CATALOG = __CATALOG_JSON__;
     const TREE = '<svg class="tree"><use href="#white-tree"></use></svg>';
     const colors = ["#263d30", "#5d5030", "#31473d", "#625a3d", "#243c3c", "#6c5733", "#3b4932", "#4b4930"];
-    const state = { code: "", films: [], pickedId: null, rotation: 0, spinning: false, authEpoch: 0, spinTimer: null };
+    const state = { code: "", films: [], pickedId: null, rotation: 0, spinning: false, authEpoch: 0, spinTimer: null, refreshId: 0, removing: false };
     const element = (id) => document.getElementById(id);
     const rpc = (name, ...args) => window.kinovecherRpc
       ? window.kinovecherRpc(name, ...args)
@@ -244,7 +268,7 @@
       hub.innerHTML = TREE;
       disc.appendChild(hub);
       disc.style.transform = "rotate(" + state.rotation + "deg)";
-      element("spin-button").disabled = state.spinning || !films.length;
+      element("spin-button").disabled = state.spinning || state.removing || !films.length;
       element("wheel-hint").textContent = state.spinning ? "Ещё мгновение — и выбор сделан" : films.length ? "В колесе: " + films.length + " · Просмотренные не повторяются" : "Пока нет фильмов для выбора.";
     }
     function metadata(film) {
@@ -255,7 +279,18 @@
       const host = element("result");
       host.replaceChildren();
       const film = state.films.find((item) => item.id === state.pickedId);
-      if (!film) return;
+      if (!film || film.status === "watching") {
+        state.pickedId = null;
+        forget("kinovecher-pick");
+        return;
+      }
+      host.appendChild(filmCard(film, "СЕГОДНЯ СМОТРИМ"));
+    }
+    function renderWatching() {
+      const watching = state.films.filter((film) => film.status === "watching");
+      element("watching").replaceChildren(...watching.map((film) => filmCard(film, "СЕЙЧАС СМОТРИМ")));
+    }
+    function filmCard(film, captionText) {
       const info = metadata(film);
       const card = document.createElement("article");
       card.className = "chosen";
@@ -274,7 +309,7 @@
       copy.className = "chosen-copy";
       const caption = document.createElement("span");
       caption.className = "caps";
-      caption.textContent = "СЕГОДНЯ СМОТРИМ";
+      caption.textContent = captionText;
       const title = document.createElement("h2");
       title.textContent = film.title;
       copy.append(caption, title);
@@ -330,8 +365,33 @@
       hint.className = "chosen-hint";
       hint.textContent = checkbox.checked ? "Фильм сохранён в просмотренных и больше не выпадает." : "После просмотра поставьте галочку. Она сохранится у всех.";
       copy.appendChild(hint);
+      if (film.status !== "watched") {
+        const remove = document.createElement("button");
+        remove.className = "remove-button";
+        remove.type = "button";
+        remove.textContent = film.status === "watching" ? "Удалить из «Сейчас смотрим»" : "Удалить из колеса";
+        remove.disabled = state.removing;
+        remove.addEventListener("click", () => confirmRemoval(film));
+        copy.appendChild(remove);
+      }
       card.append(poster, copy);
-      host.appendChild(card);
+      return card;
+    }
+    function renderRemovalOptions() {
+      const films = queue();
+      const select = element("remove-film-select");
+      const selected = select.value;
+      select.replaceChildren(new Option("Выберите фильм", ""), ...films.map((film) => new Option(film.title, film.id)));
+      select.value = films.some((film) => String(film.id) === selected) ? selected : "";
+      element("remove-film").hidden = !films.length;
+      element("remove-film-submit").disabled = state.removing;
+    }
+    function confirmRemoval(film) {
+      if (!film || state.spinning || state.removing) return;
+      const dialog = element("remove-dialog");
+      dialog.dataset.filmId = film.id;
+      element("remove-question").textContent = "Удалить «" + film.title + "» из общего списка?";
+      dialog.showModal();
     }
     function renderHistory() {
       const watched = state.films.filter((film) => film.status === "watched");
@@ -356,8 +416,8 @@
         const undo = document.createElement("button");
         undo.type = "button";
         undo.textContent = "↶";
-        undo.title = "Вернуть в колесо";
-        undo.setAttribute("aria-label", "Вернуть в колесо: " + film.title);
+        undo.title = film.resumeWatching ? "Вернуть в «Сейчас смотрим»" : "Вернуть в колесо";
+        undo.setAttribute("aria-label", undo.title + ": " + film.title);
         undo.addEventListener("click", async () => {
           undo.disabled = true;
           try { await rpc("updateWatched", state.code, film.id, false); await refresh(); }
@@ -367,17 +427,23 @@
         list.appendChild(row);
       });
     }
-    async function refresh() {
-      if (!state.code || state.spinning) return;
-      const code = state.code;
-      const epoch = state.authEpoch;
-      const data = await rpc("getState", code);
-      if (epoch !== state.authEpoch || code !== state.code) return;
-      state.films = data.films;
-      state.pickedId = Number(load("kinovecher-pick")) || state.pickedId;
+    function renderFilms() {
       renderWheel();
       renderResult();
+      renderWatching();
+      renderRemovalOptions();
       renderHistory();
+    }
+    async function refresh() {
+      if (!state.code || state.spinning || state.removing) return;
+      const code = state.code;
+      const epoch = state.authEpoch;
+      const refreshId = ++state.refreshId;
+      const data = await rpc("getState", code);
+      if (epoch !== state.authEpoch || refreshId !== state.refreshId || state.spinning || state.removing) return;
+      state.films = data.films;
+      state.pickedId = Number(load("kinovecher-pick")) || state.pickedId;
+      renderFilms();
     }
     async function enter(code) {
       const epoch = ++state.authEpoch;
@@ -393,9 +459,7 @@
       state.code = code;
       state.films = data.films;
       state.pickedId = Number(load("kinovecher-pick")) || null;
-      renderWheel();
-      renderResult();
-      renderHistory();
+      renderFilms();
       remember(code);
       forget("kinovecher-code");
       element("gate").hidden = true;
@@ -403,7 +467,7 @@
     }
     function spin() {
       const films = queue();
-      if (!films.length || state.spinning) return;
+      if (!films.length || state.spinning || state.removing) return;
       const index = Math.floor(Math.random() * films.length);
       const film = films[index];
       const center = (index + .5) * 360 / films.length;
@@ -448,6 +512,34 @@
       finally { button.disabled = false; button.textContent = "Войти ↗"; }
     });
     element("spin-button").addEventListener("click", spin);
+    element("remove-film-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const id = Number(element("remove-film-select").value);
+      confirmRemoval(queue().find((film) => film.id === id));
+    });
+    element("remove-confirm-form").addEventListener("submit", async (event) => {
+      if (event.submitter?.value !== "remove") return;
+      const id = Number(element("remove-dialog").dataset.filmId);
+      const epoch = state.authEpoch;
+      state.removing = true;
+      state.refreshId++;
+      // Let the form close the dialog before replacing its opener.
+      element("spin-button").disabled = true;
+      element("remove-film-submit").disabled = true;
+      try {
+        await rpc("removeFilm", state.code, id);
+        if (epoch !== state.authEpoch) return;
+        state.films = state.films.filter((film) => film.id !== id);
+        toast("Фильм удалён из общего списка.");
+      } catch (error) {
+        if (epoch === state.authEpoch) toast(error.message || "Не удалось удалить фильм.");
+      } finally {
+        if (epoch === state.authEpoch) {
+          state.removing = false;
+          renderFilms();
+        }
+      }
+    });
     element("add-film-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const button = element("add-film-submit");
@@ -467,6 +559,7 @@
       clearTimeout(state.spinTimer);
       state.spinTimer = null;
       state.spinning = false;
+      state.removing = false;
       state.code = "";
       state.films = [];
       state.pickedId = null;
@@ -477,6 +570,7 @@
       element("gate").hidden = false;
       element("access-code").value = "";
       element("result").replaceChildren();
+      element("watching").replaceChildren();
       window.scrollTo(0, 0);
       if (token) rpc("revokeSession", token).catch(() => {});
     });

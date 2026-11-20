@@ -5,7 +5,7 @@
   <script>
     const NONCE = '<?= nonce ?>';
     const CHANNEL = 'kinovecher-bridge-v1';
-    const ACTIONS = new Set(['authenticate', 'createSession', 'revokeSession', 'getState', 'suggestFilm', 'updateWatched']);
+    const ACTIONS = new Set(['authenticate', 'createSession', 'revokeSession', 'getState', 'suggestFilm', 'updateWatched', 'removeFilm']);
     window.addEventListener('message', (event) => {
       const request = event.data;
       if (!request || request.channel !== CHANNEL || request.nonce !== NONCE ||

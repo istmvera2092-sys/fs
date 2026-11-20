@@ -125,7 +125,29 @@ function getFilms(code) {
   requireAccess_(code);
   ensureFilms_();
   migrateSuggestions_();
+  moveBrigadaToWatching_();
   return readFilms_();
+}
+
+function moveBrigadaToWatching_() {
+  const properties = PropertiesService.getScriptProperties();
+  const marker = "films:brigadaWatching";
+  if (properties.getProperty(marker)) return;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if (properties.getProperty(marker)) return;
+    const brigada = readFilms_().find((film) => sameTitle_(film.title, "Бригада"));
+    const entries = { [marker]: "1" };
+    if (brigada) {
+      brigada.status = "watching";
+      brigada.watchedAt = null;
+      entries[FILM_PREFIX_ + brigada.id] = JSON.stringify(brigada);
+    }
+    properties.setProperties(entries);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function readSuggestions_() {
@@ -137,10 +159,7 @@ function readSuggestions_() {
 }
 
 function getState(code) {
-  requireAccess_(code);
-  ensureFilms_();
-  migrateSuggestions_();
-  return { films: readFilms_(), suggestions: [] };
+  return { films: getFilms(code), suggestions: [] };
 }
 
 function migrateSuggestions_() {
@@ -190,7 +209,7 @@ function suggestFilm(code, title) {
   lock.waitLock(10000);
   try {
     if (readFilms_().some((film) => sameTitle_(film.title, title))) {
-      throw new Error("Такой фильм уже есть в колесе.");
+      throw new Error("Этот фильм уже есть в общем списке.");
     }
     const properties = PropertiesService.getScriptProperties();
     const filmId = Number(properties.getProperty("films:nextId"));
@@ -221,10 +240,34 @@ function updateWatched(code, id, watched) {
     const raw = properties.getProperty(FILM_PREFIX_ + id);
     if (!raw) throw new Error("Фильм не найден.");
     const film = JSON.parse(raw);
-    film.status = watched ? "watched" : "queue";
+    if (watched === (film.status === "watched")) return film;
+    if (watched && film.status === "watching") film.resumeWatching = true;
+    film.status = watched ? "watched" : (film.resumeWatching ? "watching" : "queue");
+    if (!watched) delete film.resumeWatching;
     film.watchedAt = watched ? new Date().toISOString() : null;
     properties.setProperty(FILM_PREFIX_ + id, JSON.stringify(film));
     return film;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function removeFilm(code, id) {
+  requireAccess_(code);
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Фильм не найден.");
+  ensureFilms_();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const properties = PropertiesService.getScriptProperties();
+    const key = FILM_PREFIX_ + id;
+    const raw = properties.getProperty(key);
+    if (!raw) return true;
+    if (JSON.parse(raw).status === "watched") {
+      throw new Error("Фильм уже отмечен просмотренным. Обновите список.");
+    }
+    properties.deleteProperty(key);
+    return true;
   } finally {
     lock.releaseLock();
   }

@@ -57,6 +57,12 @@ assert.throws(() => context.getFilms("wrong-code"), /Доступ не подт�
 const films = context.getFilms(accessCode);
 assert.equal(films.length, 12);
 assert.equal(new Set(films.map((film) => film.id)).size, films.length);
+const brigada = films.find((film) => film.title === "Бригада");
+assert.equal(brigada.status, "watching");
+assert.equal(context.updateWatched(session, brigada.id, true).status, "watched");
+assert.equal(context.getFilms(session).find((film) => film.id === brigada.id).status, "watched");
+assert.throws(() => context.removeFilm(session, brigada.id), /отмечен просмотренным/);
+assert.equal(context.updateWatched(session, brigada.id, false).status, "watching");
 assert.equal(context.updateWatched(accessCode, films[0].id, true).status, "watched");
 assert.equal(context.getFilms(accessCode).find((film) => film.id === films[0].id).status, "watched");
 assert.equal(context.updateWatched(accessCode, films[0].id, false).status, "queue");
@@ -85,6 +91,15 @@ assert.deepEqual(JSON.parse(context.doGet({ parameter: { mode: "notificationAck"
 assert.equal(JSON.parse(context.doGet({ parameter: { mode: "notificationStatus", key: notifyKey } }).content).pending, 0);
 assert.throws(() => context.suggestFilm(accessCode, "ещё фильм"), /уже есть/);
 assert.equal(context.getFilms(accessCode).length, 14);
+const beforeRemoval = JSON.parse(JSON.stringify(context.getFilms(session)));
+assert.throws(() => context.removeFilm("wrong-code", added.id), /Доступ не подтверждён/);
+assert.equal(context.removeFilm(session, added.id), true);
+assert.equal(context.removeFilm(session, brigada.id), true);
+assert.equal(context.removeFilm(session, added.id), true);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(context.getFilms(accessCode))),
+  beforeRemoval.filter((film) => film.id !== added.id && film.id !== brigada.id),
+);
 assert.equal(context.revokeSession(session), true);
 assert.equal(context.authenticate(session), false);
 assert.ok(html.includes("data:image/webp;base64,"));
